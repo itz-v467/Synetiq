@@ -1,0 +1,78 @@
+# Optional: run from repo root with
+#   docker compose -f infra/compose/docker-compose.dev.yml up --build
+# Prefer: docker compose up --build (uses root docker-compose.yml)
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: synetiq-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ../../infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        condition: service_started
+      frontend:
+        condition: service_started
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.api
+    container_name: synetiq-api
+    env_file:
+      - ../../.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/synetiq
+      REDIS_URL: redis://redis:6379/0
+      CHROMA_PATH: /data/chroma
+      ALLOWED_ORIGINS: '["http://localhost:8080","http://127.0.0.1:8080"]'
+    volumes:
+      - chroma_data:/data/chroma
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    expose:
+      - "5000"
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: ""
+    container_name: synetiq-frontend
+    environment:
+      NODE_ENV: production
+    expose:
+      - "3000"
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: synetiq-postgres
+    environment:
+      POSTGRES_DB: synetiq
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d synetiq"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    expose:
+      - "5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: synetiq-redis
+    expose:
+      - "6379"
+
+volumes:
+  pgdata:
+  chroma_data:

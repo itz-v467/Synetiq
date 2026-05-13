@@ -1,0 +1,31 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from backend.app.auth.dependencies import get_current_user
+from backend.app.db.session import get_db
+from backend.app.models.user import User
+from backend.app.schemas.platform import GroupCreate, GroupOut
+from backend.app.services.groups_service import GroupsService
+
+router = APIRouter(prefix="/api/v1/groups", tags=["groups"])
+service = GroupsService()
+
+
+@router.post("", response_model=GroupOut)
+def create_group(payload: GroupCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    try:
+        return service.create_group(
+            db,
+            community_id=payload.community_id,
+            name=payload.name,
+            description=payload.description,
+            parent_group_id=payload.parent_group_id,
+            creator=current_user,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+
+@router.get("/community/{community_id}", response_model=list[GroupOut])
+def list_groups(community_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    return service.list_groups(db, community_id)

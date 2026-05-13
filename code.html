@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>History &amp; Action Items - Aura AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@500;600;700&amp;family=Geist:wght@600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed-variant": "#454746",
+                    "surface-dim": "#dbdad9",
+                    "secondary-fixed-dim": "#a2d824",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-container": "#858383",
+                    "on-error-container": "#93000a",
+                    "surface-variant": "#e3e2e2",
+                    "on-primary-fixed-variant": "#474646",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#c6c7c5",
+                    "tertiary-container": "#1a1c1b",
+                    "on-secondary-fixed": "#141f00",
+                    "surface-container-high": "#e9e8e8",
+                    "on-surface": "#1b1c1c",
+                    "tertiary": "#000000",
+                    "primary-fixed-dim": "#c9c6c5",
+                    "surface-bright": "#faf9f9",
+                    "on-tertiary-fixed": "#1a1c1b",
+                    "secondary-container": "#bcf543",
+                    "primary-container": "#1c1b1b",
+                    "tertiary-fixed": "#e2e3e1",
+                    "secondary-fixed": "#bcf543",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#efeded",
+                    "secondary": "#4a6700",
+                    "on-primary-fixed": "#1c1b1b",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#5f5e5e",
+                    "surface-container-low": "#f4f3f3",
+                    "on-error": "#ffffff",
+                    "on-background": "#1b1c1c",
+                    "background": "#faf9f9",
+                    "outline": "#747878",
+                    "inverse-surface": "#2f3031",
+                    "inverse-on-surface": "#f2f0f0",
+                    "primary": "#000000",
+                    "on-secondary-container": "#4f6e00",
+                    "on-secondary-fixed-variant": "#374e00",
+                    "outline-variant": "#c4c7c7",
+                    "on-surface-variant": "#444748",
+                    "surface": "#faf9f9",
+                    "on-tertiary-container": "#838483",
+                    "primary-fixed": "#e5e2e1",
+                    "surface-container-highest": "#e3e2e2",
+                    "inverse-primary": "#c9c6c5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "64px",
+                    "gutter": "24px",
+                    "margin": "32px",
+                    "md": "24px",
+                    "lg": "40px",
+                    "sm": "16px",
+                    "unit": "4px",
+                    "xs": "8px"
+            },
+            "fontFamily": {
+                    "body-sm": ["Inter"],
+                    "headline-lg": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "display-xl": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "label-caps": ["Geist"]
+            },
+            "fontSize": {
+                    "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "display-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(232, 232, 232, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-md py-xs bg-white/80 dark:bg-tertiary/80 backdrop-blur-xl rounded-full mt-4 mx-margin max-w-[95%] border border-outline-variant/30 shadow-lg shadow-black/5">
+<div class="flex items-center gap-md">
+<span class="font-headline-lg text-headline-lg font-bold text-primary dark:text-on-primary-fixed">Aura AI</span>
+<nav class="hidden md:flex items-center gap-sm ml-lg">
+<a class="text-on-surface-variant dark:text-surface-dim font-body-md hover:bg-surface-container-high transition-colors duration-200 px-3 py-1 rounded-full" href="#">Dashboard</a>
+<a class="text-on-surface-variant dark:text-surface-dim font-body-md hover:bg-surface-container-high transition-colors duration-200 px-3 py-1 rounded-full" href="#">Meetings</a>
+<a class="text-secondary-container font-semibold border-b-2 border-secondary-container pb-1 font-body-md" href="#">Insights</a>
+</nav>
+</div>
+<div class="flex items-center gap-sm">
+<div class="flex items-center bg-surface-container-low rounded-full px-sm py-1.5 border border-outline-variant/20 mr-md">
+<span class="material-symbols-outlined text-outline text-[20px] mr-xs">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm w-48" placeholder="Search insights..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant p-2 rounded-full hover:bg-surface-container-high transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant p-2 rounded-full hover:bg-surface-container-high transition-colors">auto_awesome</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant ml-xs">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCY16Iow_2dgPJjlnM9Hxv05_Bo-KkdYcllJ2gvr4E5XBGkSOPCvVTPMOIaSl9yu4Rgp3-2oU_RKTaEdqMSru7IiBmWkdVg3yMMq_eSZDKSOds9Xjj034Bf2in3aDq_kUnn71z-QJWDO64zyJbqS1M5UJr1VlhndMYmRyeh36GGgsc23ft4u0X46GEfDG3Uz8FgPwA6--Mtf0osU0rTYQUq0KgTLPeHaJ509VS2g2fXddAxAzE09_RHbHzxUY8kPNezV5x3i7G2gt-L"/>
+</div>
+<button class="bg-primary text-on-primary px-sm py-2 rounded-full font-label-caps hover:bg-on-surface-variant transition-all ml-md">New Meeting</button>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-1/2 -translate-y-1/2 flex flex-col items-center gap-lg z-50 bg-tertiary dark:bg-black rounded-full w-20 py-lg ml-margin shadow-2xl shadow-black/20">
+<div class="mb-lg">
+<span class="material-symbols-outlined text-secondary-fixed text-[32px]">hub</span>
+</div>
+<nav class="flex flex-col gap-sm">
+<button class="text-tertiary-fixed-dim p-3 hover:text-secondary-fixed-dim transition-all hover:translate-x-1 duration-200">
+<span class="material-symbols-outlined">grid_view</span>
+</button>
+<button class="text-tertiary-fixed-dim p-3 hover:text-secondary-fixed-dim transition-all hover:translate-x-1 duration-200">
+<span class="material-symbols-outlined">event_note</span>
+</button>
+<button class="bg-secondary-fixed text-on-secondary-fixed rounded-full p-3 shadow-lg shadow-secondary-fixed/30">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="text-tertiary-fixed-dim p-3 hover:text-secondary-fixed-dim transition-all hover:translate-x-1 duration-200">
+<span class="material-symbols-outlined">leaderboard</span>
+</button>
+<button class="text-tertiary-fixed-dim p-3 hover:text-secondary-fixed-dim transition-all hover:translate-x-1 duration-200">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</nav>
+<div class="mt-lg">
+<button class="w-10 h-10 bg-secondary-fixed rounded-full flex items-center justify-center text-on-secondary-fixed hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">mic</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="pt-32 pl-40 pr-margin pb-xl max-w-7xl mx-auto">
+<!-- Header Section -->
+<section class="mb-lg flex flex-col md:flex-row md:items-end justify-between gap-md">
+<div>
+<h1 class="font-display-xl text-display-xl text-primary mb-xs">Meeting History</h1>
+<p class="font-body-lg text-on-surface-variant max-w-2xl">Access your repository of intelligence. Filter through past sessions and manage your action items from one unified workspace.</p>
+</div>
+<div class="flex items-center gap-xs bg-surface-container-high p-1 rounded-full">
+<button class="px-md py-2 bg-white rounded-full shadow-sm font-label-caps text-primary">History</button>
+<button class="px-md py-2 rounded-full font-label-caps text-on-surface-variant hover:bg-surface-container-highest transition-colors">Analytics</button>
+</div>
+</section>
+<!-- Search & Filter Bar -->
+<section class="mb-lg glass-card p-xs rounded-full flex items-center gap-xs shadow-sm">
+<div class="flex-1 flex items-center pl-md">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="w-full bg-transparent border-none focus:ring-0 font-body-md px-xs" placeholder="Search by participant, keyword, or topic..." type="text"/>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant/30"></div>
+<div class="flex items-center gap-xs px-xs">
+<button class="flex items-center gap-unit bg-surface-container-highest px-sm py-2 rounded-full font-label-caps text-on-surface-variant hover:bg-secondary-container hover:text-on-secondary-container transition-all">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                    Date Range
+                </button>
+<button class="flex items-center gap-unit bg-surface-container-highest px-sm py-2 rounded-full font-label-caps text-on-surface-variant hover:bg-secondary-container hover:text-on-secondary-container transition-all">
+<span class="material-symbols-outlined text-[18px]">group</span>
+                    Team
+                </button>
+<button class="bg-primary text-white p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</section>
+<!-- Meeting History Grid -->
+<section class="mb-xl">
+<div class="flex items-center justify-between mb-md">
+<h2 class="font-headline-md text-headline-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary">history</span>
+                    Recent Meetings
+                </h2>
+<button class="text-primary font-label-caps flex items-center gap-unit hover:underline">
+                    View Archive
+                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Card 1 -->
+<div class="glass-card p-md rounded-lg hover:shadow-xl transition-all duration-300 group cursor-pointer border border-outline-variant/20">
+<div class="flex justify-between items-start mb-sm">
+<div class="px-xs py-1 bg-secondary-container/30 text-on-secondary-container rounded-full text-[10px] font-bold uppercase tracking-wider">Generated MOM</div>
+<span class="text-on-surface-variant font-label-caps">24 MAR, 14:00</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-xs group-hover:text-secondary transition-colors">Quarterly Product Roadmap Alignment</h3>
+<div class="flex items-center gap-md mb-md text-on-surface-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span class="text-body-sm">45 min</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">group</span>
+<span class="text-body-sm">8 participants</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<img alt="User" class="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgjfbM_w69plKco-drX-IeeNKV2jXtU-sL8hEkTWnTdzC9evDxrimGTbHk28YGUMFRxrHP_jK_6RJQKwD0NDcPcUzXTB0WGuZqkV9QPyZLAxBpZmUt30C_VCSoenJMPyb_FbKTs-pJzEEP4Ia9vZ6MUL3YkLQcG-mmmYvr-3GWQPfO0KAznFotVC-5h26HRDPM0d9qP4CffKVyctSwzxAjhqhinJhsRD-bRDF3uF74Ix_44mBX_ieGs5flM2HPDwzvuYyUA2fkK6it"/>
+<img alt="User" class="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDi46rz-ukToYwTWokxoP59rfhJw6chgKBMKaNijbwtab6edB8wZt4hmqRMcglTQr9QpCWBvxJjkFi370zcqjzG2frMY9_zenHbzUrixfAt4sid_eR3GcdfM-TcY7B8oOmdCBJrwOVV_ABrIPL4GWJaXXhte-RePW8HOISyywgWa97F5zeETa-2KTq3xVul2-R6vk6s2204Ty2BowWQElu9aZA3vPr7jGlGu5pRGu_O6gl5zD0ha4uL_JrPax-FGE2EuwdvzsIpC2zm"/>
+<img alt="User" class="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrwanAlcNIxU5PNdbbYVA4GYnVbbY0cMi-OfZpQZ0iyvN1jTEuWcY6sYnlzUpRg_LtsBIcgDcb0KhPnXNi_rwkl7ptzKNJbqG4CyVYVXR5Mzx8Dk3nhr_JzIh-4ozAcRGuG1zeEW0trPwVv28EJ3GbjvSv4CZUrktYzyw6rMxuAXkw2wiWmGE9HUg4GlrctorAoVUcjKefijHcnRHfD52J2X-wYLAFVXPuShINtkgmpAhG1pdDydzGOQ76oKXCxSCjAEq7gTGXZN7R"/>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border-2 border-white flex items-center justify-center text-[10px] font-bold">+5</div>
+</div>
+<button class="material-symbols-outlined text-outline group-hover:text-primary">open_in_new</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="glass-card p-md rounded-lg hover:shadow-xl transition-all duration-300 group cursor-pointer border border-outline-variant/20">
+<div class="flex justify-between items-start mb-sm">
+<div class="px-xs py-1 bg-surface-container-highest text-outline rounded-full text-[10px] font-bold uppercase tracking-wider">Processing...</div>
+<span class="text-on-surface-variant font-label-caps">23 MAR, 11:30</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-xs group-hover:text-secondary transition-colors">Security Architecture Review</h3>
+<div class="flex items-center gap-md mb-md text-on-surface-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span class="text-body-sm">120 min</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">group</span>
+<span class="text-body-sm">4 participants</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<img alt="User" class="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1MxbTw7ymEo7Z7xAhvKHb59vBFhgBrR0dMUAC0zJ8lOaYupcSpIfbAVEAji1JxOSUbLLm-WquQUhy4UB5CrFIMd_xHwQZy2AI6sjdDUJIBzUHHHSlOd1O2PjkpDFrustTZ_hr9Ru8EJrP6IdSLNX367kfjvzNUDLtr_ZN5oaxCEX0_pxfZeTkE1co-bCeeMEkVo9eSgdG2wbIFXsD2fwg8Tg3TnCgEKFv-2qTtzSrJ9SegR8g_bA5HXcPb8xpOQuljEXbCv0kIQsC"/>
+<img alt="User" class="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBT-1SLR-5I-2LtuKjB_wphu3N98hQ9UqNhfxxuIlWv0W4S-J1WMQ6_0uScf88x6ZkB1a9HIUzYagSLtqv418b-jhp0HmcwpPhfppvjgxQkaVzO0yZmRgVf0HG4hc2JglNBBrheXeTK44i96MvLBK-rhUiU3i8lLfBnIVRgKXtrDXxDEDrVAjkx1WcGigOa7xYCRGp4n6YW3sGsmdArTK3I1FQY_cZQMVq6-ahu0LbbSNnGfVjUf2pvnFqcwEqW2NK6iv_daXHYCT_h"/>
+</div>
+<button class="material-symbols-outlined text-outline">pending</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="glass-card p-md rounded-lg hover:shadow-xl transition-all duration-300 group cursor-pointer border border-outline-variant/20">
+<div class="flex justify-between items-start mb-sm">
+<div class="px-xs py-1 bg-secondary-container/30 text-on-secondary-container rounded-full text-[10px] font-bold uppercase tracking-wider">Generated MOM</div>
+<span class="text-on-surface-variant font-label-caps">22 MAR, 09:00</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-xs group-hover:text-secondary transition-colors">Marketing Brand Refresh Kickoff</h3>
+<div class="flex items-center gap-md mb-md text-on-surface-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span class="text-body-sm">30 min</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">group</span>
+<span class="text-body-sm">12 participants</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<img alt="User" class="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5wXtzrv0f750j_sb12d5b6SNXwl0VwCWUxdbn0WriTDhkX90g8anG8bmKMebDgs1x7UqjVo8ghWWOClEMCkYOwUvBadL01HRjP_WwggJrU22gswA1eUrdzgUh5Zi0rGOR6qEp_oSdjKQeCvtRFdldy1ch0KHiovmFpJNzvyhQ51oxQjBA1CSLaNokBJVuRkhZtCpqhEbWuTxq6HYob7Q-VBKXTLEhT5MthDj6_DoG92OUD8bpnuc_Tjy1OvYIu4P3Z6GWNyXnXWU9"/>
+<img alt="User" class="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCO8nBEpDeSgFpDMB8ZHW6V6u6ofCTIvYRejXgFjUKgNFZksZd8umHxuBYEaxR5ziGxGp1m3MvrP_nFyoxcDTSpKAM2MdZn0MZgxMT0IIOKNSvO8dS_Zbay9zj-9ORWpEoe7dEe9y8XgYq05TqI-kK4bUosRHujQ_T02XX9W0q9te9TckLvGwQALtVCLJlaKOBdNAjeEwZMsQvjwsBcTdFUnXfCz63cktwhN8_qd9nYHL4rj_ZBdg2drGkOQHwVbDGtLvsx_6OAcfQ"/>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border-2 border-white flex items-center justify-center text-[10px] font-bold">+10</div>
+</div>
+<button class="material-symbols-outlined text-outline group-hover:text-primary">open_in_new</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Action Items Board Section -->
+<section>
+<div class="flex items-center justify-between mb-md">
+<h2 class="font-headline-md text-headline-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary">task_alt</span>
+                    Action Items Board
+                </h2>
+<div class="flex items-center gap-sm">
+<button class="bg-surface-container-high p-2 rounded-lg text-on-surface-variant">
+<span class="material-symbols-outlined">view_kanban</span>
+</button>
+<button class="p-2 rounded-lg text-outline">
+<span class="material-symbols-outlined">list</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter items-start">
+<!-- Pending Column -->
+<div class="space-y-sm">
+<div class="flex items-center justify-between px-xs mb-xs">
+<span class="font-label-caps text-on-surface-variant uppercase flex items-center gap-xs">
+                            Pending
+                            <span class="bg-surface-container-highest px-2 py-0.5 rounded-full text-[10px]">4</span>
+</span>
+<button class="material-symbols-outlined text-outline text-[18px]">add</button>
+</div>
+<div class="glass-card p-sm rounded-lg border-l-4 border-l-surface-dim hover:translate-y-[-2px] transition-transform">
+<div class="flex justify-between items-start mb-xs">
+<span class="px-2 py-0.5 bg-error-container text-on-error-container font-label-caps rounded-full text-[10px]">High</span>
+<span class="text-outline text-[10px] font-label-caps">Due tomorrow</span>
+</div>
+<p class="font-body-md font-semibold text-primary mb-sm leading-snug">Review security protocols for AWS migration</p>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs">
+<img alt="Assignee" class="w-6 h-6 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAh2SbDakHFTeuk6H6umptg1vULwrfoxTxm5dI4sTThpI7sovOF92r7DQLiTIpntNRsPHDxz2_5wKCDXRZJVgXrBpfwabe6TE7KGnYXgriC3mpje2HENp9oD3W5HYBdOg1MONohdm1oynnz3A8ITQaSQRMCQFZrtXRm0L-srdeTTEArs2z3GA0iNiaIA77sBtrNlf3OEdLDFfeFM0MAJgb1LHHx3he3lwmU8VUQeo5lWh9QkWfFH7dWZ2PRYCLReQ3J4XUCrOBe_PrN"/>
+<span class="text-body-sm text-on-surface-variant">Alex Rivera</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">chat_bubble</span>
+</div>
+</div>
+<div class="glass-card p-sm rounded-lg border-l-4 border-l-surface-dim hover:translate-y-[-2px] transition-transform">
+<div class="flex justify-between items-start mb-xs">
+<span class="px-2 py-0.5 bg-surface-container-highest text-on-surface-variant font-label-caps rounded-full text-[10px]">Medium</span>
+<span class="text-outline text-[10px] font-label-caps">28 Mar</span>
+</div>
+<p class="font-body-md font-semibold text-primary mb-sm leading-snug">Draft marketing budget for Q2 refresh</p>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs">
+<img alt="Assignee" class="w-6 h-6 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8y2267LVMhRXC4aH9k1MZbF5zqiBFr9huHEwL5iexRA3cGmc4sJXuWZ8oK7ay1jJ8AaKISlvHaUbsqJV4hmf13rkb2gYjAfpBJkiJ8fAsLmBD4pWqvEu39m_SV1_H4E8xdqVbSNtXPSaM_bD5CCVx5WunTQHElGfIKrzNFPFDXb82p-3acxFaAXOPWyt-zS_K8AVb9xfovmH0_4Wg5bB0xMnHRTSJ-D0CF8j5oyBI2Qd3E7CbIXcAFyWldnMnRxcoCXO_DGKbvC18"/>
+<span class="text-body-sm text-on-surface-variant">Sarah Chen</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">attach_file</span>
+</div>
+</div>
+</div>
+<!-- In Progress Column -->
+<div class="space-y-sm">
+<div class="flex items-center justify-between px-xs mb-xs">
+<span class="font-label-caps text-on-surface-variant uppercase flex items-center gap-xs">
+                            In Progress
+                            <span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full text-[10px]">2</span>
+</span>
+<button class="material-symbols-outlined text-outline text-[18px]">add</button>
+</div>
+<div class="glass-card p-sm rounded-lg border-l-4 border-l-secondary-fixed hover:translate-y-[-2px] transition-transform">
+<div class="flex justify-between items-start mb-xs">
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container font-label-caps rounded-full text-[10px]">High</span>
+<div class="flex items-center gap-unit text-secondary font-label-caps text-[10px]">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                                Active
+                            </div>
+</div>
+<p class="font-body-md font-semibold text-primary mb-sm leading-snug">Implement new feedback loop in UI component</p>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs">
+<img alt="Assignee" class="w-6 h-6 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEYemSs7lOU5-Py-MmWoEQmMr9pw0JvXYV_ptLPQYvsMA5JUn1WiySf1ADwznitMVM6zcSI9s9Uq6Rga6kPnCzP-Z1RbSz93A2hWYX-v4CzyoLluFcWmt_LvSfg3lylh1bvunXzZOTptY0ckmTyIAnG70FJyCamb5hlTpWcIceLfib0TFsFSVkmBy1lgAY-eFitsFm2mMtmbXOvC8-kKWjPFshghDau5qTX7l4JBEmumXzXzYsZ0yOfQ9JZd6zfcH0_aArXvWN8MOU"/>
+<span class="text-body-sm text-on-surface-variant">Marc Jonas</span>
+</div>
+<div class="flex -space-x-1">
+<span class="material-symbols-outlined text-outline text-[16px]">chat_bubble</span>
+<span class="material-symbols-outlined text-outline text-[16px]">link</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Completed Column -->
+<div class="space-y-sm">
+<div class="flex items-center justify-between px-xs mb-xs">
+<span class="font-label-caps text-on-surface-variant uppercase flex items-center gap-xs">
+                            Completed
+                            <span class="bg-surface-container-highest px-2 py-0.5 rounded-full text-[10px]">12</span>
+</span>
+<button class="material-symbols-outlined text-outline text-[18px]">history</button>
+</div>
+<div class="glass-card p-sm rounded-lg border-l-4 border-l-on-surface opacity-70 hover:opacity-100 transition-opacity">
+<div class="flex justify-between items-start mb-xs">
+<span class="px-2 py-0.5 bg-surface-container-low text-outline font-label-caps rounded-full text-[10px] line-through">Low</span>
+<span class="material-symbols-outlined text-on-secondary-container text-[18px]">check_circle</span>
+</div>
+<p class="font-body-md font-semibold text-on-surface-variant mb-sm leading-snug line-through">Finalize meeting minutes for Brand Kickoff</p>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs">
+<img alt="Assignee" class="w-6 h-6 rounded-full grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRcgIbxF23cYPiQueIYMk_QHqIcp8hs06qZdxibYqja5qSTHVEIRV6UPjtd-2joPCco5C1IBkZS5H7kd31eOJ5EuOCb2wkTVIvNsZb1xAFT0qLXf1eQUd1vtK1jH9mW5xNKbDkCwJajHCjr6Chu-qMpXiO7U4eF1V_n26HtmLC124Qo_qjpNrzQkzlviBHQdzuyU6y79dRppIMaYS4DgEkuqG37-a6T7SkVszn8jZlKAS1n--24cdHdNI6nids8CjGNgGmNn-KiC_m"/>
+<span class="text-body-sm text-outline">You</span>
+</div>
+<span class="text-[10px] font-label-caps text-outline">Mar 22</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Decorative Aesthetic Element (Bento-style background hint) -->
+<div class="fixed bottom-0 right-0 -z-10 w-1/3 h-1/3 opacity-20 pointer-events-none">
+<div class="absolute inset-0 bg-gradient-to-tl from-secondary-fixed to-transparent rounded-tl-[100%]"></div>
+</div>
+</main>
+<!-- Contextual FAB -->
+<button class="fixed bottom-margin right-margin z-50 bg-primary text-on-primary w-16 h-16 rounded-full shadow-2xl shadow-black/30 flex items-center justify-center group hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[32px]">add</span>
+<div class="absolute right-full mr-4 bg-primary text-white px-md py-2 rounded-full font-label-caps whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl">
+            Schedule New
+        </div>
+</button>
+</body></html>

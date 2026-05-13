@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MOM Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f8f9fb;
+    --surface2: #f0f3f8;
+    --border: #d0dce8;
+    --accent: #1E40AF;
+    --accent2: #3B82F6;
+    --accent3: #60A5FA;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --danger: #f87171;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.22; z-index: 0; pointer-events: none;
+  }
+
+  body::after {
+    content: '';
+    position: fixed; top: -200px; right: -200px;
+    width: 600px; height: 600px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%);
+    z-index: 0; pointer-events: none;
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 880px; margin: 0 auto;
+    padding: 40px 24px 100px;
+  }
+
+  /* ── HEADER ── */
+  .header { text-align: center; margin-bottom: 40px; animation: fadeDown 0.7s ease both; }
+
+  .badge {
+    display: none;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(30px, 5vw, 50px);
+    font-weight: 800; line-height: 1.1;
+    letter-spacing: -0.02em; margin-bottom: 12px;
+  }
+
+  h1 span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle { color: var(--muted); font-size: 13px; line-height: 1.75; max-width: 460px; margin: 0 auto; }
+
+  /* ── SERVER STATUS ── */
+  .server-status {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 18px;
+    margin-bottom: 20px; font-size: 12px;
+    animation: fadeUp 0.6s 0.05s ease both;
+  }
+
+  .server-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0; transition: all 0.3s;
+  }
+  .server-dot.online   { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .server-dot.offline  { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+  .server-dot.checking { background: #facc15; box-shadow: 0 0 8px #facc15; animation: pulse 1s infinite; }
+
+  .server-text { flex: 1; color: var(--muted); }
+  .server-text strong { color: var(--text); }
+  .server-text code { background: var(--surface2); padding: 1px 6px; border-radius: 4px; font-size: 11px; color: var(--accent2); }
+
+  .check-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 7px; color: var(--muted);
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    padding: 5px 10px; cursor: pointer; transition: all 0.2s;
+  }
+  .check-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ── HOW TO USE BOX ── */
+  .how-to {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 12px; padding: 16px 20px;
+    margin-bottom: 20px; font-size: 12px;
+    animation: fadeUp 0.6s 0.08s ease both;
+  }
+
+  .how-to-title {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 13px; margin-bottom: 10px; color: var(--accent2);
+  }
+
+  .how-to-steps { display: flex; flex-direction: column; gap: 6px; }
+
+  .how-step {
+    display: flex; align-items: flex-start; gap: 10px; color: var(--muted);
+  }
+
+  .how-num {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(129,140,248,0.15); border: 1px solid rgba(129,140,248,0.3);
+    color: var(--accent2); font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+
+  .how-step code { background: var(--surface2); padding: 1px 6px; border-radius: 4px; color: var(--accent); font-size: 11px; }
+
+  /* ── MODE TOGGLE ── */
+  .mode-toggle {
+    display: flex; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 14px;
+    padding: 5px; margin-bottom: 24px;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+
+  .mode-btn {
+    flex: 1; padding: 12px 20px; border: none;
+    background: transparent; color: var(--muted);
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600;
+    border-radius: 10px; cursor: pointer; transition: all 0.25s ease;
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+  }
+  .mode-btn.active { background: var(--surface2); color: var(--text); box-shadow: 0 2px 12px rgba(0,0,0,0.35); }
+  .mode-btn.active .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); transition: all 0.25s; flex-shrink: 0; }
+
+  /* ── PANEL ── */
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; overflow: hidden;
+    animation: fadeUp 0.6s 0.15s ease both;
+  }
+
+  .panel-header {
+    padding: 20px 28px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .panel-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+  .icon-audio  { background: rgba(59,130,246,0.12); }
+  .icon-points { background: rgba(59,130,246,0.12); }
+
+  .panel-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+  .panel-desc  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .panel-body  { padding: 28px; }
+
+  /* ── STEP PROGRESS ── */
+  .steps {
+    display: flex; align-items: center;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 20px; margin-bottom: 24px;
+  }
+
+  .step { display: flex; align-items: center; gap: 8px; flex: 1; }
+
+  .step-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    transition: all 0.3s; flex-shrink: 0;
+  }
+  .step.active .step-circle { border-color: var(--accent2); color: var(--accent2); background: rgba(129,140,248,0.12); }
+  .step.done   .step-circle { border-color: var(--accent); color: #0a0a0f; background: var(--accent); }
+
+  .step-label { font-size: 11px; color: var(--muted); }
+  .step.active .step-label { color: var(--accent2); }
+  .step.done   .step-label { color: var(--accent); }
+
+  .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 6px; transition: background 0.3s; }
+  .step-line.done { background: var(--accent); }
+
+  /* ── DROPZONE ── */
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: 14px;
+    padding: 48px 24px; text-align: center; cursor: pointer;
+    transition: all 0.25s ease; position: relative;
+    background: rgba(59,130,246,0.01);
+  }
+  .dropzone:hover, .dropzone.dragging { border-color: var(--accent2); background: rgba(59,130,246,0.03); }
+  .dropzone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .dropzone-icon { font-size: 38px; margin-bottom: 12px; display: block; }
+  .dropzone-text { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .dropzone-sub  { font-size: 12px; color: var(--muted); }
+
+  .file-selected {
+    margin-top: 14px; background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.2); border-radius: 10px;
+    padding: 11px 16px; align-items: center; gap: 10px; display: none;
+  }
+  .file-selected.show { display: flex; }
+  .file-name { font-size: 13px; color: var(--accent2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .remove-file { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 6px; transition: color 0.2s; }
+  .remove-file:hover { color: var(--danger); }
+
+  /* ── TRANSCRIPT ── */
+  .transcript-box { margin-top: 16px; display: none; }
+  .transcript-box.show { display: block; }
+  .transcript-label { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; display: block; }
+  .transcript-content { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-size: 12px; line-height: 1.7; color: var(--muted); max-height: 120px; overflow-y: auto; white-space: pre-wrap; }
+
+  /* ── POINTS ── */
+  .points-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+
+  .point-row { display: flex; align-items: center; gap: 10px; animation: slideIn 0.25s ease; }
+  .point-number { font-size: 11px; color: var(--muted); width: 20px; text-align: right; flex-shrink: 0; }
+
+  .point-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 11px 14px; color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.2s;
+  }
+  .point-input:focus { border-color: var(--accent2); background: rgba(59,130,246,0.04); }
+  .point-input::placeholder { color: var(--muted); }
+
+  .remove-point {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 18px; width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;
+  }
+  .remove-point:hover { color: var(--danger); background: rgba(248,113,113,0.1); }
+
+  .add-point-btn {
+    background: rgba(59,130,246,0.08); border: 1px dashed rgba(59,130,246,0.3);
+    border-radius: 10px; color: var(--accent2); font-family: 'DM Mono', monospace;
+    font-size: 13px; padding: 10px 16px; cursor: pointer; width: 100%;
+    transition: all 0.2s; display: flex; align-items: center; gap: 8px; justify-content: center;
+  }
+  .add-point-btn:hover { background: rgba(59,130,246,0.14); border-color: var(--accent2); }
+
+  /* ── MEETING INFO ── */
+  .info-section { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .info-label { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; display: block; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 540px) { .info-grid { grid-template-columns: 1fr; } }
+
+  .info-input {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 11px 14px; color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 13px; outline: none;
+    transition: border-color 0.2s; width: 100%;
+  }
+  .info-input:focus { border-color: var(--accent2); background: rgba(59,130,246,0.03); }
+  .info-input::placeholder { color: var(--muted); }
+  .info-full { grid-column: 1 / -1; }
+
+  /* ── GENERATE BUTTON ── */
+  .generate-btn {
+    margin-top: 28px; width: 100%;
+    background: linear-gradient(135deg, var(--accent2), #3B82F6);
+    border: none; border-radius: 12px; padding: 16px;
+    color: #ffffff; font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 800; cursor: pointer;
+    letter-spacing: 0.03em; transition: all 0.25s ease;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    position: relative; overflow: hidden;
+  }
+  .generate-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+    transform: translateX(-100%); transition: transform 0.5s ease;
+  }
+  .generate-btn:hover::before { transform: translateX(100%); }
+  .generate-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(59,130,246,0.3); }
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    margin-top: 14px; border-radius: 12px; padding: 13px 18px;
+    font-size: 13px; display: none; align-items: center; gap: 12px;
+  }
+  .status-bar.show    { display: flex; }
+  .status-bar.loading { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); color: var(--accent2); }
+  .status-bar.success { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); color: var(--accent); }
+  .status-bar.error   { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.2); color: var(--danger); }
+
+  .spinner { width: 16px; height: 16px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+
+  .wave-bars { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+  .wave-bar  { width: 3px; background: currentColor; border-radius: 2px; animation: wave 1s ease-in-out infinite; }
+  .wave-bar:nth-child(1) { height: 8px;  animation-delay: 0s; }
+  .wave-bar:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .wave-bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+  .wave-bar:nth-child(4) { height: 16px; animation-delay: 0.15s; }
+  .wave-bar:nth-child(5) { height: 8px;  animation-delay: 0.05s; }
+
+  /* ── OUTPUT ── */
+  .output-section { margin-top: 28px; display: none; animation: fadeUp 0.5s ease both; }
+  .output-section.show { display: block; }
+
+  .output-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .output-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .output-title::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+
+  .output-actions { display: flex; gap: 8px; }
+
+  .action-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--muted);
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    padding: 6px 12px; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .action-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  .output-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px; font-size: 13px;
+    line-height: 1.85; white-space: pre-wrap; color: var(--text);
+    max-height: 500px; overflow-y: auto;
+  }
+  .output-box::-webkit-scrollbar { width: 6px; }
+  .output-box::-webkit-scrollbar-track { background: transparent; }
+  .output-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .download-row { display: flex; gap: 10px; margin-top: 12px; }
+
+  .download-btn {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 13px; color: var(--text);
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.03em;
+  }
+  .download-btn:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(59,130,246,0.06); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(20px);  } to { opacity:1; transform:translateY(0); } }
+  @keyframes slideIn  { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes spin     { to { transform: rotate(360deg); } }
+  @keyframes pulse    { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  @keyframes wave     { 0%,100% { transform: scaleY(0.5); } 50% { transform: scaleY(1); } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="badge">✦ Ollama + Llama3.2 · Whisper · 100% Free · No API Key</div>
+    <h1>Minutes of<br/><span>Meeting Generator</span></h1>
+    <p class="subtitle">Upload audio (English, Gujarati, or Hindi) or enter key points — auto-translates to English & generates professional MOM. Everything runs on your computer. 🌐</p>
+  </div>
+
+  <!-- SERVER STATUS -->
+  <div class="server-status">
+    <div class="server-dot checking" id="serverDot"></div>
+    <div class="server-text" id="serverText"><strong>Checking backend...</strong></div>
+    <button class="check-btn" onclick="checkServer()">↻ Recheck</button>
+  </div>
+
+  <!-- HOW TO USE -->
+  <div class="how-to">
+    <div class="how-to-title">⚡ Before using — start these in 2 separate terminals:</div>
+    <div class="how-to-steps">
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <div>Terminal 1 — Start Ollama: <code>ollama serve</code></div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <div>Terminal 2 — Install packages: <code>pip install -r requirements.txt</code> then run: <code>python server.py</code></div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <div>Green dot above = you're ready. Upload audio or enter points below.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">4</div>
+        <div>🌐 <strong>NEW:</strong> Gujarati & Hindi audio/text automatically translated to English for accurate MOM generation!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE TOGGLE -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="btn-audio" onclick="switchMode('audio')">
+      <span class="dot"></span> 🎙 Audio Recording
+    </button>
+    <button class="mode-btn" id="btn-points" onclick="switchMode('points')">
+      <span class="dot"></span> 📝 Key Points Only
+    </button>
+  </div>
+
+  <!-- ════ AUDIO PANEL ════ -->
+  <div class="panel" id="panel-audio">
+    <div class="panel-header">
+      <div class="panel-icon icon-audio">🎙️</div>
+      <div>
+        <div class="panel-title">Upload Meeting Audio</div>
+        <div class="panel-desc">Whisper transcribes (English, Gujarati, Hindi) → Auto-translates to English → Llama generates MOM. All runs locally, nothing sent to internet. 🌐</div>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <!-- Step tracker -->
+      <div class="steps">
+        <div class="step active" id="astep1"><div class="step-circle">1</div><div class="step-label">Upload</div></div>
+        <div class="step-line" id="aline1"></div>
+        <div class="step" id="astep2"><div class="step-circle">2</div><div class="step-label">Transcribe</div></div>
+        <div class="step-line" id="aline2"></div>
+        <div class="step" id="astep3"><div class="step-circle">3</div><div class="step-label">Generate</div></div>
+        <div class="step-line" id="aline3"></div>
+        <div class="step" id="astep4"><div class="step-circle">✓</div><div class="step-label">Done</div></div>
+      </div>
+
+      <!-- Dropzone -->
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="audioFile" accept=".mp3,.wav,.m4a,.ogg,.webm" />
+        <span class="dropzone-icon">🎵</span>
+        <div class="dropzone-text">Drop your audio file here or click to browse</div>
+        <div class="dropzone-sub">Supports .mp3 · .wav · .m4a · .ogg · .webm</div>
+      </div>
+
+      <div class="file-selected" id="fileSelected">
+        <span>🎧</span>
+        <span class="file-name" id="fileName"></span>
+        <button class="remove-file" onclick="removeFile()">✕</button>
+      </div>
+
+      <!-- Optional info -->
+      <div class="info-section">
+        <span class="info-label">Meeting Details (optional — improves MOM quality)</span>
+        <div class="info-grid">
+          <input class="info-input" id="a-title"     placeholder="Meeting Title" />
+          <input class="info-input" id="a-date"      type="date" />
+          <input class="info-input info-full" id="a-attendees" placeholder="Attendees  e.g. Raj, Priya, Sam" />
+          <input class="info-input info-full" id="a-agenda"    placeholder="Agenda  e.g. Q1 Planning, Budget Review" />
+        </div>
+      </div>
+
+      <button class="generate-btn" id="genBtnAudio" onclick="generateFromAudio()">
+        ⚡ Transcribe &amp; Generate MOM
+      </button>
+
+      <div class="status-bar" id="statusAudio">
+        <div class="wave-bars">
+          <div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div>
+        </div>
+        <span id="statusAudioText">Processing...</span>
+      </div>
+
+      <div class="transcript-box" id="transcriptBox">
+        <span class="transcript-label">📄 Whisper Transcript</span>
+        <div id="languageInfo" style="background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; font-size: 11px; display: none;">
+          <strong>Detected Language:</strong> <span id="detectedLang">English</span>
+          <span id="translationNote" style="color: var(--accent2); margin-left: 10px; display: none;">
+            🌐 (Auto-translated to English for MOM)
+          </span>
+        </div>
+        <div class="transcript-content" id="transcriptContent"></div>
+        <div class="transcript-content" id="translatedTranscriptContent" style="display: none; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px;">
+          <span class="transcript-label">🌍 Translated to English</span>
+        </div>
+      </div>
+
+      <div class="output-section" id="outputAudio">
+        <div class="output-header">
+          <div class="output-title">Minutes of Meeting</div>
+          <div class="output-actions">
+            <button class="action-btn" onclick="copyOutput('outputTextAudio')">📋 Copy</button>
+          </div>
+        </div>
+        <div class="output-box" id="outputTextAudio"></div>
+        <div class="download-row">
+          <button class="download-btn" onclick="downloadTxt('outputTextAudio','MOM_Meeting.txt')">⬇ Download .txt</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════ POINTS PANEL ════ -->
+  <div class="panel" id="panel-points" style="display:none;">
+    <div class="panel-header">
+      <div class="panel-icon icon-points">📝</div>
+      <div>
+        <div class="panel-title">Enter Key Points</div>
+        <div class="panel-desc">Type discussion points in English, Gujarati, or Hindi — auto-translates to English → Llama expands them into a full professional MOM document. 🌐</div>
+      </div>
+    </div>
+    <div class="panel-body">
+
+      <span class="info-label">Key Discussion Points</span>
+      <div class="points-list" id="pointsList">
+        <div class="point-row">
+          <span class="point-number">01</span>
+          <input class="point-input" placeholder="e.g. Discussed Q1 budget — approved ₹5L for marketing (ગુજરાતી/हिंदी/English)" />
+          <button class="remove-point" onclick="removePoint(this)">−</button>
+        </div>
+        <div class="point-row">
+          <span class="point-number">02</span>
+          <input class="point-input" placeholder="e.g. Decided to launch product by March 15 (ગુજરાતી/हिंदी/English)" />
+          <button class="remove-point" onclick="removePoint(this)">−</button>
+        </div>
+        <div class="point-row">
+          <span class="point-number">03</span>
+          <input class="point-input" placeholder="e.g. Raj to lead the development team from next week (ગુજરાતી/हिंदी/English)" />
+          <button class="remove-point" onclick="removePoint(this)">−</button>
+        </div>
+      </div>
+
+      <button class="add-point-btn" onclick="addPoint()">＋ Add Another Point</button>
+
+      <div class="info-section">
+        <span class="info-label">Meeting Details (optional)</span>
+        <div class="info-grid">
+          <input class="info-input" id="p-title"     placeholder="Meeting Title" />
+          <input class="info-input" id="p-date"      type="date" />
+          <input class="info-input info-full" id="p-attendees" placeholder="Attendees  e.g. Raj, Priya, Sam" />
+          <input class="info-input info-full" id="p-agenda"    placeholder="Agenda  e.g. Project Kickoff, Q2 Planning" />
+        </div>
+      </div>
+
+      <button class="generate-btn" id="genBtnPoints" onclick="generateFromPoints()">
+        ⚡ Generate MOM from Points
+      </button>
+
+      <div class="status-bar" id="statusPoints">
+        <div class="spinner"></div>
+        <span id="statusPointsText">Generating your MOM document...</span>
+      </div>
+
+      <div class="output-section" id="outputPoints">
+        <div class="output-header">
+          <div class="output-title">Minutes of Meeting</div>
+          <div class="output-actions">
+            <button class="action-btn" onclick="copyOutput('outputTextPoints')">📋 Copy</button>
+          </div>
+        </div>
+        <div class="output-box" id="outputTextPoints"></div>
+        <div class="download-row">
+          <button class="download-btn" onclick="downloadTxt('outputTextPoints','MOM_Points.txt')">⬇ Download .txt</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  BACKEND URL — empty = same origin (Docker nginx :8080 or direct API).
+//  Override if API is on another host: const BACKEND = 'https://api.example.com';
+// ══════════════════════════════════════════════════════
+const BACKEND = '';
+
+// ── SERVER CHECK ──────────────────────────────────────
+async function checkServer() {
+  const dot  = document.getElementById('serverDot');
+  const text = document.getElementById('serverText');
+  dot.className  = 'server-dot checking';
+  text.innerHTML = '<strong>Checking...</strong>';
+
+  try {
+    const res  = await fetch(`${BACKEND}/health`, { signal: AbortSignal.timeout(5000) });
+    const data = await res.json();
+
+    if (data.status === 'ok') {
+      const ollamaOk = data.ollama === 'running';
+      dot.className  = ollamaOk ? 'server-dot online' : 'server-dot offline';
+      text.innerHTML = ollamaOk
+        ? '<strong>All Systems Ready ✓</strong> — Whisper + Ollama + Llama running. You can use the app!'
+        : `<strong>Backend running but Ollama offline</strong> — Open a terminal and run: <code>ollama serve</code>`;
+    } else throw new Error();
+
+  } catch {
+    dot.className  = 'server-dot offline';
+    text.innerHTML = '<strong>Backend Offline ✗</strong> — Run <code>python server.py</code> in a terminal, then click Recheck';
+  }
+}
+checkServer();
+
+// ── MODE SWITCH ───────────────────────────────────────
+function switchMode(mode) {
+  document.getElementById('panel-audio').style.display  = mode === 'audio'  ? 'block' : 'none';
+  document.getElementById('panel-points').style.display = mode === 'points' ? 'block' : 'none';
+  document.getElementById('btn-audio').classList.toggle('active',  mode === 'audio');
+  document.getElementById('btn-points').classList.toggle('active', mode === 'points');
+}
+
+// ── FILE HANDLING ─────────────────────────────────────
+const dropzone   = document.getElementById('dropzone');
+const audioInput = document.getElementById('audioFile');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragging'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragging'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault(); dropzone.classList.remove('dragging');
+  if (e.dataTransfer.files[0]) showFile(e.dataTransfer.files[0]);
+});
+audioInput.addEventListener('change', () => { if (audioInput.files[0]) showFile(audioInput.files[0]); });
+
+function showFile(f) {
+  document.getElementById('fileName').textContent = f.name;
+  document.getElementById('fileSelected').classList.add('show');
+}
+function removeFile() {
+  audioInput.value = '';
+  document.getElementById('fileSelected').classList.remove('show');
+}
+
+// ── POINTS ────────────────────────────────────────────
+let pointCount = 3;
+
+function addPoint() {
+  pointCount++;
+  const list = document.getElementById('pointsList');
+  const row  = document.createElement('div');
+  row.className = 'point-row';
+  row.innerHTML = `
+    <span class="point-number">${String(pointCount).padStart(2,'0')}</span>
+    <input class="point-input" placeholder="Enter your discussion point here..." />
+    <button class="remove-point" onclick="removePoint(this)">−</button>
+  `;
+  list.appendChild(row);
+  row.querySelector('input').focus();
+}
+
+function removePoint(btn) {
+  if (document.querySelectorAll('.point-row').length <= 1) return;
+  btn.closest('.point-row').remove();
+  document.querySelectorAll('.point-row').forEach((r, i) => {
+    r.querySelector('.point-number').textContent = String(i+1).padStart(2,'0');
+  });
+}
+
+// ── STATUS ────────────────────────────────────────────
+function setStatus(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = 'status-bar show ' + type;
+  el.querySelector('span:last-child').textContent = msg;
+}
+
+// ── STEP PROGRESS ─────────────────────────────────────
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`astep${i}`).className =
+      'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    const line = document.getElementById(`aline${i}`);
+    if (line) line.className = 'step-line' + (i < n ? ' done' : '');
+  }
+}
+
+// ── MEETING INFO ──────────────────────────────────────
+function getInfo(p) {
+  const t = document.getElementById(`${p}-title`).value;
+  const d = document.getElementById(`${p}-date`).value;
+  const a = document.getElementById(`${p}-attendees`).value;
+  const g = document.getElementById(`${p}-agenda`).value;
+  let s = '';
+  if (t) s += `Meeting Title: ${t}\n`;
+  if (d) s += `Date: ${d}\n`;
+  if (a) s += `Attendees: ${a}\n`;
+  if (g) s += `Agenda: ${g}\n`;
+  return s;
+}
+
+// ── GENERATE FROM AUDIO ───────────────────────────────
+async function generateFromAudio() {
+  const file = audioInput.files[0];
+  if (!file) { alert('Please select an audio file first.'); return; }
+
+  const btn = document.getElementById('genBtnAudio');
+  btn.disabled = true;
+  document.getElementById('outputAudio').classList.remove('show');
+  document.getElementById('transcriptBox').classList.remove('show');
+
+  try {
+    setStep(1);
+    setStatus('statusAudio', 'loading', 'Uploading audio file to backend...');
+
+    setStep(2);
+    setStatus('statusAudio', 'loading', 'Whisper is transcribing your audio... (1-3 mins for long recordings, please wait)');
+
+    const form = new FormData();
+    form.append('audio', file);
+    form.append('meetingInfo', getInfo('a'));
+
+    const res = await fetch(`${BACKEND}/generate-from-audio`, { method: 'POST', body: form });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Server error');
+    }
+
+    const data = await res.json();
+
+    setStep(3);
+    
+    // ─── DISPLAY TRANSCRIPT & TRANSLATION ──────────────────────────────
+    document.getElementById('transcriptContent').textContent = data.transcript;
+    
+    // Show language info
+    const langInfo = document.getElementById('languageInfo');
+    const langMap = { 'gu': '🇮🇳 Gujarati', 'hi': '🇮🇳 Hindi', 'en': '🇬🇧 English' };
+    document.getElementById('detectedLang').textContent = langMap[data.transcript_language] || 'Unknown';
+    
+    if (data.was_translated && data.translated_transcript) {
+      langInfo.style.display = 'block';
+      document.getElementById('translationNote').style.display = 'inline';
+      document.getElementById('translatedTranscriptContent').style.display = 'block';
+      document.getElementById('translatedTranscriptContent').innerHTML = 
+        '<span class="transcript-label">🌍 Translated to English</span><div class="transcript-content" style="background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-size: 12px; line-height: 1.7; color: var(--muted); max-height: 120px; overflow-y: auto; white-space: pre-wrap;">' + 
+        data.translated_transcript + 
+        '</div>';
+      setStatus('statusAudio', 'loading', '🌐 Auto-translated from ' + (langMap[data.transcript_language] || 'unknown') + ' to English! Llama is writing your MOM document...');
+    } else {
+      langInfo.style.display = 'block';
+      document.getElementById('translationNote').style.display = 'none';
+      document.getElementById('translatedTranscriptContent').style.display = 'none';
+      setStatus('statusAudio', 'loading', 'Transcript ready! Llama is writing your MOM document...');
+    }
+    
+    document.getElementById('transcriptBox').classList.add('show');
+
+    setStep(4);
+    document.getElementById('outputTextAudio').textContent = data.mom;
+    document.getElementById('outputAudio').classList.add('show');
+    setStatus('statusAudio', 'success', '✓ MOM generated successfully! Scroll down to view or download.');
+
+  } catch(e) {
+    setStatus('statusAudio', 'error', '✗ Error: ' + e.message);
+    setStep(1);
+  }
+
+  btn.disabled = false;
+}
+
+// ── GENERATE FROM POINTS ──────────────────────────────
+async function generateFromPoints() {
+  const inputs = document.querySelectorAll('#pointsList .point-input');
+  const points = [...inputs].map(i => i.value.trim()).filter(Boolean);
+  if (!points.length) { alert('Please enter at least one key point.'); return; }
+
+  const btn = document.getElementById('genBtnPoints');
+  btn.disabled = true;
+  document.getElementById('outputPoints').classList.remove('show');
+  setStatus('statusPoints', 'loading', 'Sending points to backend for translation & MOM generation... (30-60 seconds)');
+
+  try {
+    const res = await fetch(`${BACKEND}/generate-from-points`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ points, meetingInfo: getInfo('p') })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Server error');
+    }
+
+    const data = await res.json();
+    
+    // Show translation info if applicable
+    if (data.was_translated) {
+      setStatus('statusPoints', 'loading', '🌐 Auto-translated key points from Gujarati/Hindi to English. Generating MOM...');
+    }
+    
+    document.getElementById('outputTextPoints').textContent = data.mom;
+    document.getElementById('outputPoints').classList.add('show');
+    setStatus('statusPoints', 'success', '✓ MOM generated successfully!');
+
+  } catch(e) {
+    setStatus('statusPoints', 'error', '✗ Error: ' + e.message);
+  }
+
+  btn.disabled = false;
+}
+
+// ── COPY & DOWNLOAD ───────────────────────────────────
+function copyOutput(id) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent)
+    .then(() => alert('Copied to clipboard!'));
+}
+
+function downloadTxt(id, name) {
+  const blob = new Blob([document.getElementById(id).textContent], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+}
+
+// Set today's date by default
+document.getElementById('a-date').valueAsDate = new Date();
+document.getElementById('p-date').valueAsDate = new Date();
+</script>
+</body>
+</html>

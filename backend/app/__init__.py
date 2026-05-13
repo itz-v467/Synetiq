@@ -1,0 +1,1 @@
+# Synetiq backend app package
