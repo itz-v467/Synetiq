@@ -26,11 +26,5 @@ def dashboard_analytics(db: Session = Depends(get_db), current_user: User = Depe
 
 
 @router.get("/insights")
-def dashboard_insights(current_user: User = Depends(get_current_user)):
-    # Mock insights for now, but served from API
-    return [
-        f"Welcome back, {current_user.full_name}!",
-        "You have 2 meetings scheduled for today.",
-        "MOM for 'Core Team Sync' is ready for review.",
-        "3 action items require your attention."
-    ]
+def dashboard_insights(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return service.dashboard_insights(db, current_user)

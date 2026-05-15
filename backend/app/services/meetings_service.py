@@ -18,17 +18,46 @@ _ALLOWED_TRANSITIONS: dict[MeetingStatus, set[MeetingStatus]] = {
 
 class MeetingsService:
     def create_meeting(self, db: Session, payload: dict, organizer: User) -> Meeting:
+        # Validate that the user is an organizer or admin in the target group
+        from backend.app.models.platform import GroupMembership, MembershipRole
+        
+        group_id = payload.get("group_id")
+        if not group_id:
+            raise ValueError("Group ID is required")
+            
+        if organizer.role != UserRole.ADMIN:
+            membership = db.scalar(
+                select(GroupMembership).where(
+                    GroupMembership.group_id == group_id,
+                    GroupMembership.user_id == organizer.id,
+                    GroupMembership.role == MembershipRole.ORGANIZER
+                )
+            )
+            if not membership:
+                raise ValueError("Only Group Organizers or Admins can create meetings")
+
         meeting = Meeting(organizer_id=organizer.id, **payload)
         db.add(meeting)
         db.commit()
         db.refresh(meeting)
         return meeting
 
-    def list_meetings(self, db: Session, user_id: int) -> list[Meeting]:
-        # Simple implementation: meetings organized by the user
-        return db.scalars(select(Meeting).where(Meeting.organizer_id == user_id).order_by(Meeting.meeting_date.desc())).all()
-
-    def transition_status(self, db: Session, meeting: Meeting, to_status: MeetingStatus, actor: User) -> Meeting:
+    def list_meetings(self, db: Session, user: User) -> list[Meeting]:
+        # Admins see everything
+        if user.role == UserRole.ADMIN:
+            return db.scalars(select(Meeting).order_by(Meeting.meeting_date.desc())).all()
+            
+        # Users see meetings for groups they are members of
+        from backend.app.models.platform import GroupMembership
+        
+        stmt = (
+            select(Meeting)
+            .join(GroupMembership, GroupMembership.group_id == Meeting.group_id)
+            .where(GroupMembership.user_id == user.id)
+            .order_by(Meeting.meeting_date.desc())
+            .distinct()
+        )
+        return db.scalars(stmt).all()
         from_status = meeting.status
         allowed = _ALLOWED_TRANSITIONS[from_status]
         if to_status not in allowed:

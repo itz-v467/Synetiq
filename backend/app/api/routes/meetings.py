@@ -14,7 +14,7 @@ service = MeetingsService()
 
 @router.get("", response_model=list[MeetingOut])
 def list_meetings(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return service.list_meetings(db, current_user.id)
+    return service.list_meetings(db, current_user)
 
 
 @router.post("", response_model=MeetingOut)
