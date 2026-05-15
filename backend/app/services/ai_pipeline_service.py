@@ -17,6 +17,7 @@ class AIPipelineService:
         settings = get_settings()
         self.translation_service = TranslationService()
         self.ollama_model = settings.ollama_model
+        self.ollama_client = ollama.Client(host=settings.ollama_host)
         self.whisper_model = whisper.load_model(settings.whisper_model_name)
         self._ensure_ffmpeg_paths()
 
@@ -44,7 +45,7 @@ class AIPipelineService:
     def generate_mom(self, content: str, meeting_info: str = "") -> str:
         msg = f"Meeting Details:\n{meeting_info}\n\n" if meeting_info else ""
         msg += f"Create MOM from this content:\n\n{content}"
-        response = ollama.chat(
+        response = self.ollama_client.chat(
             model=self.ollama_model,
             messages=[{"role": "system", "content": MOM_SYSTEM_PROMPT}, {"role": "user", "content": msg}],
         )

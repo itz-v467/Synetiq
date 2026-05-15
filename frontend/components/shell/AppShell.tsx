@@ -6,24 +6,59 @@ import { usePathname } from "next/navigation";
 const topNav = [
   { href: "/", label: "Dashboard" },
   { href: "/meetings", label: "Meetings" },
+  { href: "/communities", label: "Communities" },
   { href: "/insights", label: "Insights" },
 ];
 
 const sideNav = [
   { href: "/", label: "Dashboard", icon: "grid_view" },
   { href: "/meetings", label: "Meetings", icon: "event_note" },
+  { href: "/communities", label: "Communities", icon: "groups" },
+  { href: "/generate", label: "Generator", icon: "magic_button" },
   { href: "/insights", label: "Insights", icon: "history" },
   { href: "/analytics", label: "Analytics", icon: "leaderboard" },
 ];
 
+import { useState, useEffect } from "react";
+import { CreateMeetingDialog } from "@/components/meetings/CreateMeetingDialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { getToken, setToken } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Auto-login for local development/demo
+  useEffect(() => {
+    if (!getToken()) {
+      fetch(apiUrl("/auth/login"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "admin@synetiq.ai", password: "admin123" }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.access_token) {
+            setToken(d.access_token);
+            window.location.reload();
+          }
+        });
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleOpen = () => setIsModalOpen(true);
+    window.addEventListener("open-new-meeting", handleOpen);
+    return () => window.removeEventListener("open-new-meeting", handleOpen);
+  }, []);
 
   return (
     <div className="relative min-h-screen">
       <header className="glass-header fixed left-1/2 top-4 z-50 mx-auto flex w-[min(95%,1120px)] -translate-x-1/2 items-center justify-between gap-4 px-gutter py-2 pl-6 pr-3">
         <div className="flex items-center gap-6">
-          <Link href="/" className="font-display text-headline-lg font-bold text-primary md:text-display-xl">
+          <Link href="/" className="font-display text-headline-lg font-bold text-primary md:text-display-xl drop-shadow-sm">
             Synetiq
           </Link>
           <nav className="hidden items-center gap-2 md:flex">
@@ -35,8 +70,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   href={item.href}
                   className={
                     active
-                      ? "rounded-pill border-b-2 border-secondary-container px-3 py-1 text-body-md font-semibold text-secondary-on-container"
-                      : "rounded-pill px-3 py-1 text-body-md text-on-surface-variant transition hover:bg-surface-container-high"
+                      ? "rounded-pill bg-primary px-4 py-1.5 text-body-md font-bold text-primary-foreground shadow-md transition-all"
+                      : "rounded-pill px-3 py-1.5 text-body-md font-medium text-muted transition hover:bg-surface-container-high hover:text-primary"
                   }
                 >
                   {item.label}
@@ -47,23 +82,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex items-center gap-2">
           <div className="input-pill mr-2 hidden items-center gap-2 sm:flex">
-            <span className="material-symbols-outlined text-line text-[20px]">search</span>
-            <input className="w-40 max-w-[12rem] border-0 bg-transparent text-body-sm focus:ring-0 md:w-48" placeholder="Search meetings…" readOnly />
+            <span className="material-symbols-outlined text-muted text-[20px]">search</span>
+            <input className="w-40 max-w-[12rem] border-0 bg-transparent text-body-sm text-primary focus:ring-0 md:w-48 placeholder:text-muted/70" placeholder="Search meetings…" readOnly />
           </div>
-          <button type="button" className="rounded-pill p-2 text-on-surface-variant transition hover:bg-surface-container-high" aria-label="Notifications">
+          <button type="button" className="rounded-pill p-2 text-muted transition hover:bg-surface-container-high hover:text-primary" aria-label="Notifications">
             <span className="material-symbols-outlined text-[22px]">notifications</span>
           </button>
-          <button type="button" className="rounded-pill p-2 text-on-surface-variant transition hover:bg-surface-container-high" aria-label="AI">
+          <button type="button" className="rounded-pill p-2 text-muted transition hover:bg-surface-container-high hover:text-primary" aria-label="AI">
             <span className="material-symbols-outlined text-[22px]">auto_awesome</span>
           </button>
-          <a href="/legacy/mom" className="btn-ai-primary hidden text-center sm:inline-block">
-            Legacy MOM
-          </a>
-          <button type="button" className="btn-primary">
+          <button type="button" onClick={() => setIsModalOpen(true)} className="btn-primary">
             New meeting
           </button>
         </div>
       </header>
+
+      <CreateMeetingDialog 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["meetings"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+        }}
+      />
 
       <aside className="pill-nav fixed left-4 top-1/2 z-40 hidden w-16 -translate-y-1/2 flex-col items-center gap-6 py-8 md:flex lg:left-8 lg:w-20">
         <span className="material-symbols-outlined text-[28px] text-lime">hub</span>
@@ -76,8 +117,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className={
                   active
-                    ? "flex items-center justify-center rounded-full bg-lime p-3 text-primary shadow-lg shadow-lime/30"
-                    : "flex items-center justify-center rounded-full p-3 text-primary-foreground/60 transition hover:text-lime"
+                    ? "flex items-center justify-center rounded-full bg-lime p-3 text-white shadow-lg shadow-lime/30"
+                    : "flex items-center justify-center rounded-full p-3 text-muted transition hover:bg-surface-container-highest hover:text-primary"
                 }
                 aria-label={item.label}
               >
@@ -89,8 +130,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             href="/settings"
             className={
               pathname.startsWith("/settings")
-                ? "flex items-center justify-center rounded-full bg-lime p-3 text-primary shadow-lg shadow-lime/30"
-                : "flex items-center justify-center rounded-full p-3 text-primary-foreground/60 transition hover:text-lime"
+                ? "flex items-center justify-center rounded-full bg-lime p-3 text-white shadow-lg shadow-lime/30"
+                : "flex items-center justify-center rounded-full p-3 text-muted transition hover:bg-surface-container-highest hover:text-primary"
             }
             aria-label="Settings"
           >

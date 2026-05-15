@@ -21,11 +21,12 @@ router = APIRouter(tags=["system"])
 @router.get("/health")
 def health() -> dict:
     settings = get_settings()
+    ollama_client = ollama.Client(host=settings.ollama_host)
     try:
-        ollama.list()
+        ollama_client.list()
         ollama_status = "running"
     except Exception:
-        ollama_status = "offline — run: ollama serve"
+        ollama_status = "offline"
 
     try:
         with engine.connect() as conn:

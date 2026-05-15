@@ -14,11 +14,14 @@
 
 body {
   @apply bg-canvas text-on-surface font-sans antialiased;
+  background-image: radial-gradient(circle at top right, rgba(132, 204, 22, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at bottom left, rgba(0, 0, 0, 0.02) 0%, transparent 40%);
+  background-attachment: fixed;
 }
 
 @layer components {
   .glass-card {
-    @apply rounded-xl border border-border/80 bg-white/85 shadow-glass backdrop-blur-glass;
+    @apply rounded-xl border border-border/80 bg-white/85 shadow-glass backdrop-blur-glass transition-all hover:border-line-subtle hover:bg-white/95;
   }
 
   .glass-header {
@@ -26,18 +29,22 @@ body {
   }
 
   .pill-nav {
-    @apply rounded-pill bg-primary text-primary-foreground shadow-nav;
+    @apply rounded-pill border border-line-subtle/30 bg-white/80 text-on-surface shadow-nav backdrop-blur-xl;
   }
 
   .btn-ai-primary {
-    @apply rounded-pill bg-lime px-5 py-2 text-sm font-semibold text-primary shadow-md transition hover:brightness-95;
+    @apply rounded-pill bg-lime px-5 py-2 text-sm font-semibold text-primary shadow-md transition hover:scale-105 hover:brightness-105;
   }
 
   .btn-primary {
-    @apply rounded-pill bg-primary px-5 py-2 text-label-caps uppercase tracking-wide text-primary-foreground transition hover:bg-on-surface-variant;
+    @apply rounded-pill bg-primary px-5 py-2 text-label-caps uppercase tracking-wide text-primary-foreground shadow-md transition-all hover:scale-105 hover:bg-primary/90 hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply rounded-pill bg-surface-container-high px-5 py-2 text-label-caps uppercase tracking-wide text-on-surface transition-all hover:bg-surface-container-highest;
   }
 
   .input-pill {
-    @apply rounded-pill border border-line-subtle/20 bg-surface-container-low px-4 py-2 text-body-sm text-on-surface outline-none ring-0 placeholder:text-muted;
+    @apply rounded-pill border border-line-subtle/40 bg-surface-container-low/50 px-4 py-2 text-body-sm text-on-surface outline-none ring-0 placeholder:text-muted focus-within:border-lime/50 focus-within:bg-white transition-all;
   }
 }

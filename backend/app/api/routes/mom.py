@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.dependencies import get_current_user
@@ -12,6 +13,12 @@ from backend.app.workers.tasks.ai_tasks import generate_embeddings
 router = APIRouter(prefix="/api/v1/mom", tags=["mom"])
 service = MOMService()
 search_service = SemanticSearchService()
+
+
+@router.get("")
+def list_moms(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Basic implementation: MOMs the user has access to or created
+    return db.scalars(select(MOMRecord).join(Meeting).where(Meeting.organizer_id == current_user.id).order_by(MOMRecord.created_at.desc())).all()
 
 
 @router.post("/{meeting_id}/generate")

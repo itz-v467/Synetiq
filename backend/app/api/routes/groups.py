@@ -29,3 +29,38 @@ def create_group(payload: GroupCreate, db: Session = Depends(get_db), current_us
 @router.get("/community/{community_id}", response_model=list[GroupOut])
 def list_groups(community_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return service.list_groups(db, community_id)
+
+
+from backend.app.schemas.platform import GroupMemberAdd
+
+@router.get("/{group_id}/members")
+def list_group_members(group_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    return service.list_members(db, group_id)
+
+
+@router.post("/{group_id}/members")
+def add_group_member(
+    group_id: int,
+    payload: GroupMemberAdd,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        service.add_member(db, group_id, payload.email, payload.role, current_user)
+        return {"status": "success"}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.delete("/{group_id}/members/{user_id}")
+def remove_group_member(
+    group_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        service.remove_member(db, group_id, user_id, current_user)
+        return {"status": "success"}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))

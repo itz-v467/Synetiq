@@ -22,13 +22,17 @@ class SemanticSearchService:
     def __init__(self) -> None:
         settings = get_settings()
         self.embedding_model = settings.embedding_model
+        self.ollama_client = ollama.Client(host=settings.ollama_host)
         self.client = PersistentClient(path=settings.chroma_path)
         self.collection = self.client.get_or_create_collection("synetiq_mom")
 
     def index_mom(self, db: Session, mom: MOMRecord, community_id: int, group_id: int) -> SemanticEmbedding:
         doc_id = str(uuid.uuid4())
+        resp = self.ollama_client.embeddings(model=self.embedding_model, prompt=mom.generated_text)
+        embedding_vector = resp["embedding"]
         self.collection.add(
             ids=[doc_id],
+            embeddings=[embedding_vector],
             documents=[mom.generated_text],
             metadatas=[{"mom_id": mom.id, "meeting_id": mom.meeting_id, "community_id": community_id, "group_id": group_id}],
         )
@@ -45,8 +49,9 @@ class SemanticSearchService:
         return embedding
 
     def search(self, db: Session, query: str, limit: int = 3) -> list[dict]:
-        _ = ollama.embed(model=self.embedding_model, input=query)
-        matches = self.collection.query(query_texts=[query], n_results=limit)
+        resp = self.ollama_client.embeddings(model=self.embedding_model, prompt=query)
+        embedding_vector = resp["embedding"]
+        matches = self.collection.query(query_embeddings=[embedding_vector], n_results=limit)
         ids = matches.get("ids", [[]])[0]
         distances = matches.get("distances", [[]])[0] if matches.get("distances") else []
         if not ids:

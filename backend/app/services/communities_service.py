@@ -44,3 +44,50 @@ class CommunitiesService:
             .where(CommunityMembership.user_id == user.id, Community.deleted_at.is_(None))
         )
         return list(memberships.all())
+
+    def add_member(self, db: Session, community_id: int, email: str, role: MembershipRole, admin_user: User) -> None:
+        if admin_user.role.value != "ADMIN":
+            raise ValueError("Only Admins can add members to communities")
+            
+        target_user = db.scalar(select(User).where(User.email == email))
+        if not target_user:
+            raise ValueError("User not found")
+            
+        existing = db.scalar(
+            select(CommunityMembership)
+            .where(CommunityMembership.community_id == community_id, CommunityMembership.user_id == target_user.id)
+        )
+        if existing:
+            existing.role = role
+        else:
+            db.add(CommunityMembership(community_id=community_id, user_id=target_user.id, role=role))
+        db.commit()
+
+    def remove_member(self, db: Session, community_id: int, user_id: int, admin_user: User) -> None:
+        if admin_user.role.value != "ADMIN":
+            raise ValueError("Only Admins can remove members from communities")
+            
+        membership = db.scalar(
+            select(CommunityMembership)
+            .where(CommunityMembership.community_id == community_id, CommunityMembership.user_id == user_id)
+        )
+        if membership:
+            db.delete(membership)
+            db.commit()
+
+    def list_members(self, db: Session, community_id: int) -> list[dict]:
+        memberships = db.execute(
+            select(CommunityMembership, User)
+            .join(User, User.id == CommunityMembership.user_id)
+            .where(CommunityMembership.community_id == community_id)
+        ).all()
+        
+        return [
+            {
+                "user_id": user.id,
+                "email": user.email,
+                "full_name": user.full_name,
+                "role": mem.role.value,
+            }
+            for mem, user in memberships
+        ]

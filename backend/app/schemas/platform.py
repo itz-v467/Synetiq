@@ -100,3 +100,11 @@ class ActionItemUpdateStatus(BaseModel):
 
 class MembershipUpdate(BaseModel):
     role: MembershipRole
+
+class CommunityMemberAdd(BaseModel):
+    email: EmailStr
+    role: MembershipRole = MembershipRole.PARTICIPANT
+
+class GroupMemberAdd(BaseModel):
+    email: EmailStr
+    role: MembershipRole = MembershipRole.PARTICIPANT

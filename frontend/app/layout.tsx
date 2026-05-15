@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   description: "AI-powered community meeting intelligence and governance",
 };
 
+import { Providers } from "@/components/Providers";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${manrope.variable} ${inter.variable}`} suppressHydrationWarning>
@@ -29,7 +31,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen font-sans">{children}</body>
+      <body className="min-h-screen font-sans">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

@@ -48,5 +48,25 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def on_startup() -> None:
         Base.metadata.create_all(bind=engine)
+        from sqlalchemy.orm import Session
+        from backend.app.db.session import SessionLocal
+        from backend.app.models.user import User, UserRole
+        from backend.app.core.security import hash_password
+        from sqlalchemy import select
+
+        with SessionLocal() as db:
+            admin_email = "admin@synetiq.ai"
+            existing = db.scalar(select(User).where(User.email == admin_email))
+            if not existing:
+                admin = User(
+                    full_name="Synetiq Admin",
+                    email=admin_email,
+                    password_hash=hash_password("admin123"),
+                    role=UserRole.ADMIN,
+                    is_active=True
+                )
+                db.add(admin)
+                db.commit()
+                print(f"Created default admin: {admin_email}")
 
     return app

@@ -32,7 +32,9 @@ class Settings(BaseSettings):
 
     whisper_model_name: str = "base"
     ollama_model: str = "llama3.2"
+    ollama_host: str = "http://localhost:11434"
     embedding_model: str = "nomic-embed-text"
+    anonymized_telemetry: bool = False
     celery_eager: bool = True
 
 

@@ -24,6 +24,10 @@ class MeetingsService:
         db.refresh(meeting)
         return meeting
 
+    def list_meetings(self, db: Session, user_id: int) -> list[Meeting]:
+        # Simple implementation: meetings organized by the user
+        return db.scalars(select(Meeting).where(Meeting.organizer_id == user_id).order_by(Meeting.meeting_date.desc())).all()
+
     def transition_status(self, db: Session, meeting: Meeting, to_status: MeetingStatus, actor: User) -> Meeting:
         from_status = meeting.status
         allowed = _ALLOWED_TRANSITIONS[from_status]
