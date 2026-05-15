@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -23,6 +23,7 @@ class CommunityOut(BaseModel):
     name: str
     slug: str
     description: str | None
+    created_at: datetime
 
 
 class GroupCreate(BaseModel):
@@ -39,6 +40,7 @@ class GroupOut(BaseModel):
     name: str
     description: str | None
     parent_group_id: int | None
+    created_at: datetime
 
 
 class MeetingCreate(BaseModel):
@@ -65,6 +67,8 @@ class MeetingOut(BaseModel):
     title: str
     description: str | None
     meeting_date: date
+    start_time: str
+    location: str
     status: MeetingStatus
 
 

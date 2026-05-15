@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 
 function CommunityMembersList({ communityId }: { communityId: string }) {
+  const queryClient = useQueryClient();
   const { data: members, isLoading } = useQuery({
     queryKey: ["community-members", communityId],
     queryFn: async () => {
@@ -16,6 +17,12 @@ function CommunityMembersList({ communityId }: { communityId: string }) {
       return res.json();
     },
   });
+
+  const removeMember = async (userId: number) => {
+    const res = await fetchWithAuth(apiUrl(`/api/v1/communities/${communityId}/members/${userId}`), { method: "DELETE" });
+    if (res.ok) queryClient.invalidateQueries({ queryKey: ["community-members", communityId] });
+    else alert("Failed to remove member");
+  };
 
   if (isLoading) return <div className="h-12 bg-surface-container-low rounded-xl animate-pulse mt-4"></div>;
   if (!members?.length) return <p className="text-muted mt-4">No members yet.</p>;
@@ -28,7 +35,16 @@ function CommunityMembersList({ communityId }: { communityId: string }) {
             <p className="font-semibold text-primary">{m.full_name}</p>
             <p className="text-sm text-muted">{m.email}</p>
           </div>
-          <span className="text-xs font-bold uppercase tracking-widest bg-lime/20 text-secondary px-3 py-1 rounded-full">{m.role}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold uppercase tracking-widest bg-lime/20 text-secondary px-3 py-1 rounded-full">{m.role}</span>
+            <button
+              onClick={() => removeMember(m.user_id)}
+              className="rounded-full p-1.5 text-muted hover:bg-error/10 hover:text-error transition"
+              title="Remove member"
+            >
+              <span className="material-symbols-outlined text-[18px]">person_remove</span>
+            </button>
+          </div>
         </div>
       ))}
     </div>
@@ -43,6 +59,8 @@ export default function CommunityDetailsPage() {
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupDesc, setNewGroupDesc] = useState("");
   const [loading, setLoading] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
 
   const { data: communities } = useQuery({
     queryKey: ["communities"],
@@ -93,6 +111,33 @@ export default function CommunityDetailsPage() {
     }
   };
 
+  const handleDeleteGroup = async (groupId: number) => {
+    const res = await fetchWithAuth(apiUrl(`/api/v1/groups/${groupId}`), { method: "DELETE" });
+    if (res.ok) queryClient.invalidateQueries({ queryKey: ["groups", id] });
+    else alert("Failed to archive group");
+  };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail) return;
+    setInviting(true);
+    try {
+      const res = await fetchWithAuth(apiUrl(`/api/v1/communities/${id}/members`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail, role: "PARTICIPANT" })
+      });
+      if (res.ok) {
+        setInviteEmail("");
+        queryClient.invalidateQueries({ queryKey: ["community-members", id as string] });
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Failed to invite member");
+      }
+    } catch { alert("Network error"); }
+    finally { setInviting(false); }
+  };
+
   return (
     <section className="space-y-8">
       <button onClick={() => router.push("/communities")} className="flex items-center gap-2 text-label-md font-bold text-muted hover:text-primary transition">
@@ -133,8 +178,15 @@ export default function CommunityDetailsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="glass-card rounded-3xl p-6 flex flex-col"
             >
-              <div className="mb-4">
+              <div className="mb-4 flex items-start justify-between">
                 <h3 className="text-headline-sm font-bold text-primary">{group.name}</h3>
+                <button
+                  onClick={() => handleDeleteGroup(group.id)}
+                  className="rounded-full p-1.5 text-muted hover:bg-error/10 hover:text-error transition"
+                  title="Archive group"
+                >
+                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                </button>
               </div>
               <p className="text-body-md text-on-surface-variant flex-1 mb-6">
                 {group.description || "No description provided."}
@@ -147,26 +199,27 @@ export default function CommunityDetailsPage() {
         </div>
       )}
 
-      {/* Members Section Placeholder to satisfy PRD FR-02.2 */}
+      {/* Members Section */}
       <div className="pt-12 border-t border-line-subtle mt-12">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center mb-8">
           <div>
             <h2 className="font-display text-headline-lg text-primary">Community Members</h2>
             <p className="mt-1 text-body-md text-muted">People who have access to this community.</p>
           </div>
-          <button onClick={() => {
-            const email = prompt("Enter user email to add:");
-            if (email) {
-              fetchWithAuth(apiUrl(`/api/v1/communities/${id}/members`), {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, role: "PARTICIPANT" })
-              }).then(r => r.ok ? window.location.reload() : r.json().then(e => alert(e.detail || "Failed")));
-            }
-          }} className="btn-secondary flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px]">person_add</span>
-            Invite Members
-          </button>
+          <form onSubmit={handleInvite} className="flex flex-col sm:flex-row items-center gap-3">
+            <input
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder="user@example.com"
+              className="rounded-pill border border-line-subtle bg-surface px-4 py-2 text-body-sm focus:border-lime focus:ring-lime"
+              required
+            />
+            <button type="submit" disabled={inviting} className="btn-secondary flex items-center gap-2 whitespace-nowrap">
+              <span className="material-symbols-outlined text-[20px]">person_add</span>
+              {inviting ? "Inviting..." : "Invite Member"}
+            </button>
+          </form>
         </div>
         <CommunityMembersList communityId={id as string} />
       </div>

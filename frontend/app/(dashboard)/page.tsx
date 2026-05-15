@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { apiUrl } from "@/lib/api";
 import { getDashboardStats, getInsights } from "@/services/analytics";
@@ -9,6 +11,9 @@ import { StatsGrid } from "@/components/dashboard/StatsGrid";
 import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
 
 export default function HomePage() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+
   const { data: healthData } = useQuery({
     queryKey: ["health"],
     queryFn: async () => {
@@ -29,6 +34,13 @@ export default function HomePage() {
   });
 
   const health = healthData?.ollama === "running" ? "ready" : healthData ? "degraded" : "offline";
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/insights?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <>
@@ -85,6 +97,22 @@ export default function HomePage() {
               {health === "degraded" && "API is up; Ollama may be offline—start `ollama serve` on the host for full AI."}
               {health === "offline" && "Could not reach /health. Confirm `docker compose up` and nginx on port 8080."}
             </p>
+            {healthData && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {Object.entries(healthData).filter(([k]) => k !== "status").map(([key, val]) => (
+                  <span key={key} className={`inline-flex items-center gap-1.5 rounded-pill px-3 py-1 text-label-sm ${
+                    val === "running" || val === "connected" || val === "online" || val === "ready"
+                      ? "bg-lime/15 text-lime"
+                      : "bg-error/15 text-error"
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${
+                      val === "running" || val === "connected" || val === "online" || val === "ready" ? "bg-lime" : "bg-error"
+                    }`} />
+                    {key}: {val as string}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="mt-6 flex flex-wrap gap-3">
               <a href="/docs" className="btn-primary inline-block text-center">
                 Open API docs
@@ -92,17 +120,22 @@ export default function HomePage() {
             </div>
           </motion.article>
 
-          <section className="glass-card flex flex-wrap items-center gap-3 rounded-pill p-2 pl-6 shadow-sm">
+          <form onSubmit={handleSearch} className="glass-card flex flex-wrap items-center gap-3 rounded-pill p-2 pl-6 shadow-sm">
             <span className="material-symbols-outlined text-line">search</span>
-            <input className="min-w-0 flex-1 border-0 bg-transparent text-body-md focus:ring-0" placeholder="Search past meetings, decisions, or owners…" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="min-w-0 flex-1 border-0 bg-transparent text-body-md focus:ring-0"
+              placeholder="Search past meetings, decisions, or owners…"
+            />
             <div className="hidden h-8 w-px bg-line-subtle/40 sm:block" />
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-pill bg-surface-container-highest px-4 py-2 text-label-caps text-on-surface-variant">Date range</span>
-              <button type="button" className="flex h-10 w-10 items-center justify-center rounded-pill bg-primary text-primary-foreground">
-                <span className="material-symbols-outlined text-[20px]">tune</span>
+              <Link href="/meetings" className="rounded-pill bg-surface-container-highest px-4 py-2 text-label-caps text-on-surface-variant hover:bg-surface-container-high transition">Date range</Link>
+              <button type="submit" className="flex h-10 w-10 items-center justify-center rounded-pill bg-primary text-primary-foreground">
+                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
               </button>
             </div>
-          </section>
+          </form>
         </div>
 
         <div className="space-y-6">
@@ -116,18 +149,30 @@ export default function HomePage() {
           >
             <h2 className="font-display text-headline-md text-primary">Quick actions</h2>
             <ul className="mt-4 space-y-4 text-body-sm text-muted">
-              <li className="flex items-center gap-3 cursor-pointer hover:text-primary transition">
-                <span className="material-symbols-outlined text-secondary text-[22px]">groups</span>
-                Invite members & manage RSVPs
+              <li>
+                <Link href="/communities" className="flex items-center gap-3 cursor-pointer hover:text-primary transition">
+                  <span className="material-symbols-outlined text-secondary text-[22px]">groups</span>
+                  Invite members & manage RSVPs
+                </Link>
               </li>
-              <Link href="/generate" className="flex items-center gap-3 cursor-pointer hover:text-primary transition">
-                <span className="material-symbols-outlined text-secondary text-[22px]">description</span>
-                AI Minutes Generator (Upload)
-              </Link>
-              <Link href="/live" className="flex items-center gap-3 cursor-pointer hover:text-primary transition">
-                <span className="material-symbols-outlined text-secondary text-[22px]">bolt</span>
-                Live meeting capture (WebSocket)
-              </Link>
+              <li>
+                <Link href="/generate" className="flex items-center gap-3 cursor-pointer hover:text-primary transition">
+                  <span className="material-symbols-outlined text-secondary text-[22px]">description</span>
+                  AI Minutes Generator (Upload)
+                </Link>
+              </li>
+              <li>
+                <Link href="/live" className="flex items-center gap-3 cursor-pointer hover:text-primary transition">
+                  <span className="material-symbols-outlined text-secondary text-[22px]">bolt</span>
+                  Live meeting capture (WebSocket)
+                </Link>
+              </li>
+              <li>
+                <Link href="/analytics" className="flex items-center gap-3 cursor-pointer hover:text-primary transition">
+                  <span className="material-symbols-outlined text-secondary text-[22px]">leaderboard</span>
+                  View platform analytics
+                </Link>
+              </li>
             </ul>
           </motion.article>
         </div>

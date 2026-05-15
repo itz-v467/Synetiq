@@ -30,10 +30,7 @@ export default function CommunitiesPage() {
       const res = await fetchWithAuth(apiUrl("/api/v1/communities"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newCommName,
-          description: newCommDesc,
-        }),
+        body: JSON.stringify({ name: newCommName, description: newCommDesc }),
       });
       if (res.ok) {
         setIsModalOpen(false);
@@ -50,6 +47,18 @@ export default function CommunitiesPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await fetchWithAuth(apiUrl(`/api/v1/communities/${id}`), { method: "DELETE" });
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: ["communities"] });
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Failed to archive community");
+      }
+    } catch { alert("Error archiving community"); }
   };
 
   return (
@@ -87,9 +96,18 @@ export default function CommunitiesPage() {
               animate={{ opacity: 1, y: 0 }}
               className="glass-card rounded-3xl p-6 flex flex-col"
             >
-              <div className="mb-4">
-                <h3 className="text-headline-sm font-bold text-primary">{community.name}</h3>
-                <p className="text-body-sm text-muted">/{community.slug}</p>
+              <div className="mb-4 flex items-start justify-between">
+                <div>
+                  <h3 className="text-headline-sm font-bold text-primary">{community.name}</h3>
+                  <p className="text-body-sm text-muted">/{community.slug}</p>
+                </div>
+                <button
+                  onClick={() => handleDelete(community.id)}
+                  className="rounded-full p-1.5 text-muted hover:bg-error/10 hover:text-error transition"
+                  title="Archive community"
+                >
+                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                </button>
               </div>
               <p className="text-body-md text-on-surface-variant flex-1 mb-6">
                 {community.description || "No description provided."}

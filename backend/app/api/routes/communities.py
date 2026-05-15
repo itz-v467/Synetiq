@@ -59,3 +59,19 @@ def remove_community_member(
         return {"status": "success"}
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.delete("/{community_id}")
+def archive_community(
+    community_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN)),
+):
+    from datetime import datetime, timezone
+    from backend.app.models.platform import Community
+    community = db.get(Community, community_id)
+    if not community:
+        raise HTTPException(status_code=404, detail="Community not found")
+    community.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"status": "archived"}

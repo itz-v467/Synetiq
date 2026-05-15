@@ -24,9 +24,11 @@ import { CreateMeetingDialog } from "@/components/meetings/CreateMeetingDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { getToken, setToken } from "@/lib/auth";
 import { apiUrl } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -80,18 +82,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="input-pill mr-2 hidden items-center gap-2 sm:flex">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          <div onClick={() => router.push("/insights")} className="input-pill mr-2 hidden items-center gap-2 lg:flex cursor-pointer hover:bg-surface-container-high transition">
             <span className="material-symbols-outlined text-muted text-[20px]">search</span>
-            <input className="w-40 max-w-[12rem] border-0 bg-transparent text-body-sm text-primary focus:ring-0 md:w-48 placeholder:text-muted/70" placeholder="Search meetings…" readOnly />
+            <span className="w-32 xl:w-40 text-body-sm text-muted/70 truncate">Search meetings…</span>
           </div>
+          <button type="button" onClick={() => router.push("/insights")} className="lg:hidden rounded-pill p-2 text-muted transition hover:bg-surface-container-high hover:text-primary" aria-label="Search">
+            <span className="material-symbols-outlined text-[22px]">search</span>
+          </button>
           <button type="button" className="rounded-pill p-2 text-muted transition hover:bg-surface-container-high hover:text-primary" aria-label="Notifications">
             <span className="material-symbols-outlined text-[22px]">notifications</span>
           </button>
-          <button type="button" className="rounded-pill p-2 text-muted transition hover:bg-surface-container-high hover:text-primary" aria-label="AI">
-            <span className="material-symbols-outlined text-[22px]">auto_awesome</span>
-          </button>
-          <button type="button" onClick={() => setIsModalOpen(true)} className="btn-primary">
+          <button type="button" onClick={() => setIsModalOpen(true)} className="btn-primary whitespace-nowrap ml-1 text-sm sm:text-base px-3 sm:px-5">
             New meeting
           </button>
         </div>

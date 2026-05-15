@@ -64,3 +64,19 @@ def remove_group_member(
         return {"status": "success"}
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.delete("/{group_id}")
+def archive_group(
+    group_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from datetime import datetime, timezone
+    from backend.app.models.platform import Group
+    group = db.get(Group, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    group.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"status": "archived"}

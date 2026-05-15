@@ -1,11 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/auth";
 import { apiUrl } from "@/lib/api";
 import { MeetingsTable } from "@/components/meetings/MeetingsTable";
 
+const STATUSES = ["All", "DRAFT", "PUBLISHED", "LIVE", "ENDED", "ARCHIVED"];
+
 export default function MeetingsPage() {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+
   const { data: meetings, isLoading } = useQuery({
     queryKey: ["meetings"],
     queryFn: async () => {
@@ -13,6 +19,12 @@ export default function MeetingsPage() {
       if (!res.ok) throw new Error("Failed to fetch meetings");
       return res.json();
     },
+  });
+
+  const filtered = (meetings || []).filter((m: any) => {
+    const matchSearch = !search || m.title?.toLowerCase().includes(search.toLowerCase()) || m.location?.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === "All" || m.status === statusFilter;
+    return matchSearch && matchStatus;
   });
 
   return (
@@ -31,10 +43,33 @@ export default function MeetingsPage() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="input-pill flex flex-1 items-center gap-2 max-w-md">
           <span className="material-symbols-outlined text-line text-[20px]">search</span>
-          <input className="flex-1 border-0 bg-transparent text-body-sm focus:ring-0" placeholder="Filter meetings by title or location…" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 border-0 bg-transparent text-body-sm focus:ring-0"
+            placeholder="Filter meetings by title or location…"
+          />
+          {search && (
+            <button onClick={() => setSearch("")} className="text-muted hover:text-primary transition">
+              <span className="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          )}
         </div>
-        <span className="rounded-pill bg-surface-container-highest px-4 py-2 text-label-caps text-on-surface-variant cursor-pointer hover:bg-surface-container-high transition">Status: All</span>
-        <span className="rounded-pill bg-surface-container-highest px-4 py-2 text-label-caps text-on-surface-variant cursor-pointer hover:bg-surface-container-high transition">Group: All</span>
+        <div className="flex gap-2">
+          {STATUSES.map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`rounded-pill px-4 py-2 text-label-caps cursor-pointer transition ${
+                statusFilter === s
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high"
+              }`}
+            >
+              {s === "All" ? "Status: All" : s}
+            </button>
+          ))}
+        </div>
       </div>
 
       {isLoading ? (
@@ -44,7 +79,7 @@ export default function MeetingsPage() {
           ))}
         </div>
       ) : (
-        <MeetingsTable meetings={meetings || []} />
+        <MeetingsTable meetings={filtered} />
       )}
     </section>
   );

@@ -28,7 +28,35 @@ class AnalyticsService:
     def platform_summary(self, db: Session) -> dict:
         total_meetings = db.scalar(select(func.count(Meeting.id))) or 0
         live_meetings = db.scalar(select(func.count(Meeting.id)).where(Meeting.status == MeetingStatus.LIVE)) or 0
-        return {"total_meetings": total_meetings, "live_meetings": live_meetings}
+        
+        from backend.app.models.platform import Community, Group, ActionItem
+        from backend.app.models.user import User as UserModel
+        
+        total_communities = db.scalar(select(func.count(Community.id)).where(Community.deleted_at.is_(None))) or 0
+        total_groups = db.scalar(select(func.count(Group.id)).where(Group.deleted_at.is_(None))) or 0
+        total_users = db.scalar(select(func.count(UserModel.id)).where(UserModel.is_active == True)) or 0
+        
+        total_actions = db.scalar(select(func.count(ActionItem.id))) or 0
+        completed_actions = db.scalar(
+            select(func.count(ActionItem.id)).where(ActionItem.status == ActionItemStatus.DONE)
+        ) or 0
+        action_completion_rate = (completed_actions / total_actions * 100) if total_actions else 0
+        pending_actions = total_actions - completed_actions
+        
+        ended_meetings = db.scalar(select(func.count(Meeting.id)).where(Meeting.status == MeetingStatus.ENDED)) or 0
+        
+        return {
+            "total_meetings": total_meetings,
+            "live_meetings": live_meetings,
+            "ended_meetings": ended_meetings,
+            "total_communities": total_communities,
+            "total_groups": total_groups,
+            "total_users": total_users,
+            "total_action_items": total_actions,
+            "completed_action_items": completed_actions,
+            "pending_action_items": pending_actions,
+            "action_completion_rate": round(action_completion_rate, 2),
+        }
 
     def dashboard_summary(self, db: Session, user_id: int) -> dict:
         today = date.today()

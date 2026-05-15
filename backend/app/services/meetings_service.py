@@ -58,6 +58,8 @@ class MeetingsService:
             .distinct()
         )
         return db.scalars(stmt).all()
+
+    def transition_status(self, db: Session, meeting: Meeting, to_status: MeetingStatus, actor: User) -> Meeting:
         from_status = meeting.status
         allowed = _ALLOWED_TRANSITIONS[from_status]
         if to_status not in allowed:
