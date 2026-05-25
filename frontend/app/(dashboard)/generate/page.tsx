@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiUrl } from "@/lib/api";
+import { fetchWithAuth } from "@/lib/auth";
 
 export default function GeneratorPage() {
   const [mode, setMode] = useState<"audio" | "points">("audio");
@@ -22,14 +23,14 @@ export default function GeneratorPage() {
         formData.append("audio", audioFile);
         formData.append("meetingInfo", meetingInfo);
 
-        const res = await fetch(apiUrl("/generate-from-audio"), {
+        const res = await fetchWithAuth(apiUrl("/generate-from-audio"), {
           method: "POST",
           body: formData,
         });
         const data = await res.json();
         setResult(data);
       } else {
-        const res = await fetch(apiUrl("/generate-from-points"), {
+        const res = await fetchWithAuth(apiUrl("/generate-from-points"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

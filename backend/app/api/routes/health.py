@@ -6,10 +6,13 @@ import ollama
 import redis
 try:
     from chromadb import PersistentClient
+    from chromadb.config import Settings
 except ImportError:
     class PersistentClient:
         def __init__(self, *args, **kwargs): pass
         def heartbeat(self): return True
+    class Settings:
+        def __init__(self, *args, **kwargs): pass
 
 from backend.app.core.config import get_settings
 from backend.app.db.session import engine
@@ -42,7 +45,10 @@ def health() -> dict:
         redis_status = "offline"
 
     try:
-        client = PersistentClient(path=settings.chroma_path)
+        client = PersistentClient(
+            path=settings.chroma_path,
+            settings=Settings(anonymized_telemetry=False)
+        )
         _ = client.heartbeat()
         chroma_status = "connected"
     except Exception:

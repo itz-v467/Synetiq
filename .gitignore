@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
 parts/
 sdist/
@@ -170,5 +170,4 @@ Audio/
 *.mp3
 *.wav
 *.m4a
-docker-compose.yml
 Dockerfile

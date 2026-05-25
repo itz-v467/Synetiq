@@ -2,8 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { fetchWithAuth } from "@/lib/auth";
 import { apiUrl } from "@/lib/api";
+import { readApiError } from "@/lib/api-errors";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface Meeting {
@@ -27,8 +30,15 @@ const NEXT_ACTIONS: Record<string, { label: string; to_status: string; icon: str
   ARCHIVED: [],
 };
 
-export function MeetingsTable({ meetings }: { meetings: Meeting[] }) {
+export function MeetingsTable({
+  meetings,
+  onScheduleMeeting,
+}: {
+  meetings: Meeting[];
+  onScheduleMeeting?: () => void;
+}) {
   const qc = useQueryClient();
+  const router = useRouter();
   const [menuId, setMenuId] = useState<number | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -52,10 +62,8 @@ export function MeetingsTable({ meetings }: { meetings: Meeting[] }) {
       if (res.ok) {
         qc.invalidateQueries({ queryKey: ["meetings"] });
         qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
-        qc.invalidateQueries({ queryKey: ["admin-analytics"] });
       } else {
-        const err = await res.json();
-        alert(err.detail || "Transition failed");
+        alert(await readApiError(res, "Transition failed"));
       }
     } catch { alert("Network error"); }
     finally { setBusy(null); setMenuId(null); }
@@ -69,7 +77,12 @@ export function MeetingsTable({ meetings }: { meetings: Meeting[] }) {
         </div>
         <h3 className="text-headline-md text-primary drop-shadow-md">No meetings scheduled</h3>
         <p className="mt-2 text-body-lg text-muted max-w-md">Get your community together. Create your first meeting to start generating AI insights.</p>
-        <button onClick={() => window.dispatchEvent(new Event('open-new-meeting'))} className="btn-primary mt-8">Schedule a meeting</button>
+        <button
+          onClick={() => (onScheduleMeeting ? onScheduleMeeting() : window.dispatchEvent(new Event("open-new-meeting")))}
+          className="btn-primary mt-8"
+        >
+          Schedule a meeting
+        </button>
       </div>
     );
   }
@@ -98,7 +111,12 @@ export function MeetingsTable({ meetings }: { meetings: Meeting[] }) {
                 className="group transition-all duration-300 hover:bg-surface-container-high/40 hover:shadow-inner"
               >
                 <td className="px-8 py-6">
-                  <p className="text-body-lg font-bold text-primary group-hover:text-lime transition-colors">{meeting.title}</p>
+                  <Link
+                    href={`/meetings/${meeting.id}`}
+                    className="text-body-lg font-bold text-primary group-hover:text-lime transition-colors hover:underline"
+                  >
+                    {meeting.title}
+                  </Link>
                 </td>
                 <td className="px-8 py-6 text-body-md text-muted font-medium">{meeting.meeting_date}</td>
                 <td className="px-8 py-6">
@@ -160,12 +178,21 @@ export function MeetingsTable({ meetings }: { meetings: Meeting[] }) {
                           ))}
                           {actions.length > 0 && <hr className="my-1 border-line-subtle/30" />}
                           <button
-                            onClick={() => { setMenuId(null); alert(`Meeting: ${meeting.title}\nDate: ${meeting.meeting_date}\nTime: ${meeting.start_time || "N/A"}\nLocation: ${meeting.location}\nStatus: ${meeting.status}`); }}
+                            onClick={() => { setMenuId(null); router.push(`/meetings/${meeting.id}`); }}
                             className="flex w-full items-center gap-3 px-4 py-3 text-body-sm text-primary hover:bg-surface-container-high transition"
                           >
                             <span className="material-symbols-outlined text-[18px] text-secondary">info</span>
                             View Details
                           </button>
+                          {(meeting.status === "LIVE" || meeting.status === "PUBLISHED") && (
+                            <button
+                              onClick={() => { setMenuId(null); router.push(`/live?meetingId=${meeting.id}`); }}
+                              className="flex w-full items-center gap-3 px-4 py-3 text-body-sm text-primary hover:bg-surface-container-high transition"
+                            >
+                              <span className="material-symbols-outlined text-[18px] text-secondary">mic</span>
+                              Live capture
+                            </button>
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>

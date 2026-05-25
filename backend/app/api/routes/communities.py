@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from backend.app.auth.dependencies import get_current_user, require_roles
+from backend.app.auth.dependencies import get_current_user, require_platform_admin
 from backend.app.db.session import get_db
-from backend.app.models.user import User, UserRole
+from backend.app.models.user import User
 from backend.app.schemas.platform import CommunityCreate, CommunityOut
 from backend.app.services.communities_service import CommunitiesService
 
@@ -15,7 +15,7 @@ service = CommunitiesService()
 def create_community(
     payload: CommunityCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.ADMIN)),
+    current_user: User = Depends(get_current_user),
 ):
     return service.create_community(db, name=payload.name, description=payload.description, creator=current_user)
 
@@ -38,7 +38,7 @@ def add_community_member(
     community_id: int,
     payload: CommunityMemberAdd,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.ADMIN)),
+    current_user: User = Depends(require_platform_admin()),
 ):
     try:
         service.add_member(db, community_id, payload.email, payload.role, current_user)
@@ -52,7 +52,7 @@ def remove_community_member(
     community_id: int,
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.ADMIN)),
+    current_user: User = Depends(require_platform_admin()),
 ):
     try:
         service.remove_member(db, community_id, user_id, current_user)
@@ -61,11 +61,18 @@ def remove_community_member(
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+@router.get("/{community_id}/dashboard")
+def community_dashboard(community_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    from backend.app.services.analytics_service import AnalyticsService
+
+    return AnalyticsService().community_dashboard(db, community_id)
+
+
 @router.delete("/{community_id}")
 def archive_community(
     community_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.ADMIN)),
+    current_user: User = Depends(require_platform_admin()),
 ):
     from datetime import datetime, timezone
     from backend.app.models.platform import Community

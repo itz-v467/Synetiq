@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.models.platform import CommunityMembership, Group, GroupMembership, MembershipRole
+from backend.app.domain.rbac.platform_roles import is_platform_super
 from backend.app.models.user import User, UserRole
 
 
@@ -16,7 +17,7 @@ class GroupsService:
         parent_group_id: int | None,
         creator: User,
     ) -> Group:
-        if creator.role != UserRole.ADMIN:
+        if not is_platform_super(creator):
             membership = db.scalar(
                 select(CommunityMembership).where(
                     CommunityMembership.community_id == community_id,
@@ -45,7 +46,7 @@ class GroupsService:
 
     def add_member(self, db: Session, group_id: int, email: str, role: MembershipRole, organizer_user: User) -> None:
         # Check if organizer is admin or an organizer of this group
-        if organizer_user.role.value != "ADMIN":
+        if not is_platform_super(organizer_user):
             organizer_membership = db.scalar(
                 select(GroupMembership).where(GroupMembership.group_id == group_id, GroupMembership.user_id == organizer_user.id)
             )
@@ -54,7 +55,16 @@ class GroupsService:
             
         target_user = db.scalar(select(User).where(User.email == email))
         if not target_user:
-            raise ValueError("User not found")
+            # Auto-create stub user
+            target_user = User(
+                email=email,
+                full_name=email.split("@")[0],
+                password_hash="invited_no_password",
+                role=UserRole.PARTICIPANT,
+                is_active=True,
+            )
+            db.add(target_user)
+            db.flush()
             
         # Ensure user is part of the community
         group = db.scalar(select(Group).where(Group.id == group_id))
@@ -65,8 +75,10 @@ class GroupsService:
             select(CommunityMembership)
             .where(CommunityMembership.community_id == group.community_id, CommunityMembership.user_id == target_user.id)
         )
-        if not comm_membership and organizer_user.role.value != "ADMIN":
-             raise ValueError("User must be part of the community first")
+        if not comm_membership and not is_platform_super(organizer_user):
+            # Auto-add to community if invited to a group
+            db.add(CommunityMembership(community_id=group.community_id, user_id=target_user.id, role=MembershipRole.MEMBER))
+            db.flush()
              
         existing = db.scalar(
             select(GroupMembership)
@@ -76,10 +88,23 @@ class GroupsService:
             existing.role = role
         else:
             db.add(GroupMembership(group_id=group_id, user_id=target_user.id, role=role))
+            
+            # Send invitation email
+            from backend.app.services.notifications_service import NotificationsService
+            from backend.app.workers.tasks.ai_tasks import send_notification
+            
+            notif_service = NotificationsService()
+            body = f"<p>You have been invited to join the group <strong>{group.name}</strong> on Synetiq.</p><p>Please log in to access the platform.</p>"
+            row = notif_service.queue(db, target_user.id, "group_invite", f"Invitation: {group.name}", body)
+            try:
+                send_notification.delay(row.id)
+            except Exception:
+                pass
+
         db.commit()
 
     def remove_member(self, db: Session, group_id: int, user_id: int, organizer_user: User) -> None:
-        if organizer_user.role.value != "ADMIN":
+        if not is_platform_super(organizer_user):
             organizer_membership = db.scalar(
                 select(GroupMembership).where(GroupMembership.group_id == group_id, GroupMembership.user_id == organizer_user.id)
             )

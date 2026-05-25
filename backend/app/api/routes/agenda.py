@@ -14,9 +14,22 @@ service = AgendaService()
 @router.post("")
 def add_agenda_item(payload: AgendaItemCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     item = service.add_item(db, payload.model_dump())
-    return {"id": item.id}
+    return {"id": item.id, "topic": item.topic, "presenter": item.presenter, "duration_minutes": item.duration_minutes, "position": item.position}
 
 
 @router.get("/{meeting_id}")
 def list_agenda_items(meeting_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return service.list_for_meeting(db, meeting_id)
+
+
+@router.delete("/item/{item_id}")
+def delete_agenda_item(item_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    from backend.app.models.platform import AgendaItem
+    from datetime import datetime, timezone
+    item = db.get(AgendaItem, item_id)
+    if not item:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Agenda item not found")
+    item.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"success": True}

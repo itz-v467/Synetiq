@@ -34,10 +34,11 @@ function StatCard({ label, value, icon, trend, color = "text-secondary" }: StatC
 
 export function StatsGrid({ stats }: { stats: any }) {
   const cards = [
-    { label: "Meetings today", value: stats?.meetings_today ?? 0, icon: "calendar_today", color: "text-blue-500" },
-    { label: "Pending approvals", value: stats?.pending_approvals ?? 0, icon: "pending_actions", color: "text-amber-500" },
-    { label: "Action items due", value: stats?.action_items_due ?? 0, icon: "assignment_late", color: "text-error" },
-    { label: "Attendance rate", value: `${stats?.attendance_rate ?? 0}%`, icon: "groups", color: "text-lime" },
+    { label: "Meetings Today", value: stats?.meetings_today ?? 0, icon: "calendar_today", color: "text-blue-500" },
+    { label: "Total Meetings", value: stats?.total_meetings ?? 0, icon: "event", color: "text-amber-500" },
+    { label: "Live Meetings", value: stats?.live_meetings ?? 0, icon: "bolt", color: "text-error" },
+    { label: "Communities", value: stats?.total_communities ?? 0, icon: "public", color: "text-lime" },
+    { label: "Groups", value: stats?.total_groups ?? 0, icon: "groups", color: "text-secondary" },
   ];
 
   return (

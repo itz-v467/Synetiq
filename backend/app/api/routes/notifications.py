@@ -21,4 +21,20 @@ def create_notification(user_id: int, category: str, subject: str, body_html: st
 
 @router.get("")
 def list_my_notifications(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return db.query(Notification).filter(Notification.user_id == current_user.id).order_by(Notification.created_at.desc()).all()
+    rows = (
+        db.query(Notification)
+        .filter(Notification.user_id == current_user.id)
+        .order_by(Notification.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    return [
+        {
+            "id": n.id,
+            "category": n.category,
+            "subject": n.subject,
+            "status": n.status.value if hasattr(n.status, "value") else str(n.status),
+            "created_at": str(n.created_at),
+        }
+        for n in rows
+    ]

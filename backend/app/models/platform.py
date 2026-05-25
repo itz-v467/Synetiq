@@ -32,6 +32,17 @@ class Recurrence(str, Enum):
     MONTHLY = "MONTHLY"
 
 
+class MeetingMode(str, Enum):
+    ONLINE = "ONLINE"
+    OFFLINE = "OFFLINE"
+
+
+class TranscriptSource(str, Enum):
+    UPLOAD = "UPLOAD"
+    LIVE = "LIVE"
+    MANUAL = "MANUAL"
+
+
 class RSVPStatus(str, Enum):
     ACCEPTED = "ACCEPTED"
     DECLINED = "DECLINED"
@@ -113,12 +124,26 @@ class Meeting(TimestampMixin, SoftDeleteMixin, Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     meeting_date: Mapped[Date] = mapped_column(Date, nullable=False)
     start_time: Mapped[str] = mapped_column(String(16), nullable=False)
+    end_time: Mapped[str | None] = mapped_column(String(16), nullable=True)
     expected_duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
     location: Mapped[str] = mapped_column(String(512), nullable=False)
+    meeting_link: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    meeting_mode: Mapped[MeetingMode] = mapped_column(SqlEnum(MeetingMode), nullable=False, default=MeetingMode.OFFLINE)
     join_policy: Mapped[JoinPolicy] = mapped_column(SqlEnum(JoinPolicy), nullable=False, default=JoinPolicy.INVITE_ONLY)
     recurrence: Mapped[Recurrence] = mapped_column(SqlEnum(Recurrence), nullable=False, default=Recurrence.ONE_TIME)
     status: Mapped[MeetingStatus] = mapped_column(SqlEnum(MeetingStatus), nullable=False, default=MeetingStatus.DRAFT)
     is_cancelled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class MeetingTranscript(TimestampMixin, Base):
+    __tablename__ = "meeting_transcripts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    meeting_id: Mapped[int] = mapped_column(ForeignKey("meetings.id"), nullable=False, index=True)
+    source: Mapped[TranscriptSource] = mapped_column(SqlEnum(TranscriptSource), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    filename: Mapped[str | None] = mapped_column(String(512), nullable=True)
 
 
 class MeetingStatusAudit(TimestampMixin, Base):
@@ -232,6 +257,18 @@ class SemanticEmbedding(TimestampMixin, Base):
     community_id: Mapped[int] = mapped_column(ForeignKey("communities.id"), nullable=False, index=True)
     group_id: Mapped[int] = mapped_column(ForeignKey("groups.id"), nullable=False, index=True)
     chroma_document_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+
+
+class AuditLog(TimestampMixin, Base):
+    __tablename__ = "audit_logs"
+    __table_args__ = (Index("ix_audit_resource", "resource_type", "resource_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    action: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    resource_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    resource_id: Mapped[int | None] = mapped_column(nullable=True)
+    details: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
 
 
 class AnalyticsSnapshot(TimestampMixin, Base):

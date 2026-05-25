@@ -1,16 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/auth";
 import { apiUrl } from "@/lib/api";
 import { MeetingsTable } from "@/components/meetings/MeetingsTable";
+import { CreateMeetingDialog } from "@/components/meetings/CreateMeetingDialog";
 
 const STATUSES = ["All", "DRAFT", "PUBLISHED", "LIVE", "ENDED", "ARCHIVED"];
 
 export default function MeetingsPage() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [meetingDialogOpen, setMeetingDialogOpen] = useState(false);
+
+  const openMeetingDialog = () => setMeetingDialogOpen(true);
 
   const { data: meetings, isLoading } = useQuery({
     queryKey: ["meetings"],
@@ -34,7 +39,7 @@ export default function MeetingsPage() {
           <h1 className="font-display text-display-xl text-primary">Meetings</h1>
           <p className="mt-1 text-body-lg text-muted">Manage your upcoming and past community sessions.</p>
         </div>
-        <button onClick={() => window.dispatchEvent(new Event('open-new-meeting'))} className="btn-primary flex items-center gap-2">
+        <button onClick={openMeetingDialog} className="btn-primary flex items-center gap-2">
           <span className="material-symbols-outlined text-[20px]">add</span>
           New meeting
         </button>
@@ -79,8 +84,17 @@ export default function MeetingsPage() {
           ))}
         </div>
       ) : (
-        <MeetingsTable meetings={filtered} />
+        <MeetingsTable meetings={filtered} onScheduleMeeting={openMeetingDialog} />
       )}
+
+      <CreateMeetingDialog
+        isOpen={meetingDialogOpen}
+        onClose={() => setMeetingDialogOpen(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["meetings"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+        }}
+      />
     </section>
   );
 }

@@ -3,8 +3,9 @@ import re
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.domain.rbac.platform_roles import is_platform_super
 from backend.app.models.platform import Community, CommunityMembership, MembershipRole
-from backend.app.models.user import User
+from backend.app.models.user import User, UserRole
 
 
 class CommunitiesService:
@@ -36,7 +37,7 @@ class CommunitiesService:
         return community
 
     def list_accessible(self, db: Session, user: User) -> list[Community]:
-        if user.role.value == "ADMIN":
+        if is_platform_super(user):
             return list(db.scalars(select(Community).where(Community.deleted_at.is_(None))).all())
         memberships = db.scalars(
             select(Community)
@@ -46,12 +47,21 @@ class CommunitiesService:
         return list(memberships.all())
 
     def add_member(self, db: Session, community_id: int, email: str, role: MembershipRole, admin_user: User) -> None:
-        if admin_user.role.value != "ADMIN":
-            raise ValueError("Only Admins can add members to communities")
+        if not is_platform_super(admin_user):
+            raise ValueError("Only platform admins can add members to communities")
             
         target_user = db.scalar(select(User).where(User.email == email))
         if not target_user:
-            raise ValueError("User not found")
+            # Auto-create stub user
+            target_user = User(
+                email=email,
+                full_name=email.split("@")[0],
+                password_hash="invited_no_password",
+                role=UserRole.PARTICIPANT,
+                is_active=True,
+            )
+            db.add(target_user)
+            db.flush()
             
         existing = db.scalar(
             select(CommunityMembership)
@@ -61,11 +71,26 @@ class CommunitiesService:
             existing.role = role
         else:
             db.add(CommunityMembership(community_id=community_id, user_id=target_user.id, role=role))
+            
+            # Send invitation email
+            community = db.get(Community, community_id)
+            if community:
+                from backend.app.services.notifications_service import NotificationsService
+                from backend.app.workers.tasks.ai_tasks import send_notification
+                
+                notif_service = NotificationsService()
+                body = f"<p>You have been invited to join the community <strong>{community.name}</strong> on Synetiq.</p><p>Please log in to access the platform.</p>"
+                row = notif_service.queue(db, target_user.id, "community_invite", f"Invitation: {community.name}", body)
+                try:
+                    send_notification.delay(row.id)
+                except Exception:
+                    pass
+
         db.commit()
 
     def remove_member(self, db: Session, community_id: int, user_id: int, admin_user: User) -> None:
-        if admin_user.role.value != "ADMIN":
-            raise ValueError("Only Admins can remove members from communities")
+        if not is_platform_super(admin_user):
+            raise ValueError("Only platform admins can remove members from communities")
             
         membership = db.scalar(
             select(CommunityMembership)

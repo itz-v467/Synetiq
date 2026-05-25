@@ -2,6 +2,8 @@
 #   docker compose -f infra/compose/docker-compose.dev.yml up --build
 # Prefer: docker compose up --build (uses root docker-compose.yml)
 
+name: synetiq
+
 services:
   nginx:
     image: nginx:1.27-alpine
@@ -12,7 +14,7 @@ services:
       - ../../infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
       frontend:
         condition: service_started
 
@@ -20,6 +22,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.api
+      args:
+        BUILD_REVISION: ${BUILD_REVISION:-local}
     container_name: synetiq-api
     env_file:
       - ../../.env
@@ -28,6 +32,11 @@ services:
       REDIS_URL: redis://redis:6379/0
       CHROMA_PATH: /data/chroma
       ALLOWED_ORIGINS: '["http://localhost:8080","http://127.0.0.1:8080"]'
+      SMTP_ENABLED: "true"
+      SMTP_HOST: "mailpit"
+      SMTP_PORT: "1025"
+      SMTP_TLS: "false"
+      SMTP_FROM: "noreply@synetiq.ai"
     volumes:
       - chroma_data:/data/chroma
     depends_on:
@@ -35,8 +44,19 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      mailpit:
+        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     expose:
       - "5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 90s
+    restart: unless-stopped
 
   frontend:
     build:
@@ -44,6 +64,7 @@ services:
       dockerfile: infra/docker/Dockerfile.frontend
       args:
         NEXT_PUBLIC_API_URL: ""
+        BUILD_REVISION: ${BUILD_REVISION:-local}
     container_name: synetiq-frontend
     environment:
       NODE_ENV: production
@@ -72,6 +93,43 @@ services:
     container_name: synetiq-redis
     expose:
       - "6379"
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: synetiq-mailpit
+    ports:
+      - "8025:8025"
+    expose:
+      - "1025"
+    environment:
+      MP_MAX_MESSAGES: 500
+
+  celery-worker:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.api
+      args:
+        BUILD_REVISION: ${BUILD_REVISION:-local}
+    container_name: synetiq-celery-worker
+    command: celery -A backend.app.workers.celery_app worker --loglevel=info
+    env_file:
+      - ../../.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/synetiq
+      REDIS_URL: redis://redis:6379/0
+      CELERY_EAGER: "false"
+      SMTP_ENABLED: "true"
+      SMTP_HOST: "mailpit"
+      SMTP_PORT: "1025"
+      SMTP_TLS: "false"
+      SMTP_FROM: "noreply@synetiq.ai"
+    depends_on:
+      - redis
+      - postgres
+      - api
+      - mailpit
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   pgdata:

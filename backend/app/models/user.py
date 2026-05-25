@@ -7,6 +7,7 @@ from backend.app.db.base import Base, SoftDeleteMixin, TimestampMixin
 
 
 class UserRole(str, Enum):
+    SUPERADMIN = "SUPERADMIN"
     ADMIN = "ADMIN"
     ORGANIZER = "ORGANIZER"
     PARTICIPANT = "PARTICIPANT"

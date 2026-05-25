@@ -79,6 +79,33 @@ class AIPipelineService:
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
 
+    async def generate_from_photo(self, photo_file: UploadFile, meeting_info: str = "") -> dict:
+        import base64
+        photo_bytes = await photo_file.read()
+        photo_base64 = base64.b64encode(photo_bytes).decode("utf-8")
+        
+        msg = f"Meeting Details:\n{meeting_info}\n\n" if meeting_info else ""
+        msg += "Create MOM from this handwritten or whiteboard note image. Summarize the points."
+        
+        response = self.ollama_client.chat(
+            model="llama3.2-vision",
+            messages=[
+                {"role": "system", "content": MOM_SYSTEM_PROMPT}, 
+                {"role": "user", "content": msg, "images": [photo_base64]}
+            ],
+        )
+        if hasattr(response, "message"):
+            mom = response.message.content
+        else:
+            mom = response["message"]["content"]
+            
+        return {
+            "success": True,
+            "transcript": "Processed via vision model.",
+            "was_translated": False,
+            "mom": mom,
+        }
+
     async def generate_from_points(self, points: list[str], meeting_info: str = "") -> dict:
         translated_points: list[str] = []
         was_translated = False

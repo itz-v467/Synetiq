@@ -1,0 +1,3 @@
+# Root compose — delegates to dev stack (see README)
+include:
+  - path: infra/compose/docker-compose.dev.yml

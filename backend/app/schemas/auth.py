@@ -32,3 +32,13 @@ class UserResponse(BaseModel):
     email: EmailStr
     role: UserRole
     is_active: bool
+
+
+class ProfileUpdateRequest(BaseModel):
+    full_name: str | None = Field(default=None, min_length=2, max_length=255)
+    language_preference: str | None = Field(default=None, min_length=2, max_length=8)
+
+
+class UserMeResponse(UserResponse):
+    language_preference: str = "en"
+    capabilities: dict

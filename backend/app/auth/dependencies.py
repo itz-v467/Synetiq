@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.core.security import decode_token
 from backend.app.db.session import get_db
+from backend.app.domain.rbac.platform_roles import PLATFORM_ADMIN_ROLES, PLATFORM_SUPER_ROLES
 from backend.app.models.user import User, UserRole
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -33,3 +34,15 @@ def require_roles(*roles: UserRole):
         return current_user
 
     return checker
+
+
+def require_platform_admin():
+    return require_roles(*PLATFORM_ADMIN_ROLES)
+
+
+def require_superadmin():
+    return require_roles(UserRole.SUPERADMIN)
+
+
+def require_platform_super():
+    return require_roles(*PLATFORM_SUPER_ROLES)

@@ -13,7 +13,10 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# BUILD_REVISION busts Docker layer cache when source changes
+ARG BUILD_REVISION=dev
 COPY . .
+RUN echo "build_revision=${BUILD_REVISION}" > /app/.build_revision
 
 EXPOSE 5000
 

@@ -60,59 +60,65 @@ class AnalyticsService:
 
     def dashboard_summary(self, db: Session, user_id: int) -> dict:
         today = date.today()
-        # Meetings today in any group the user is part of
-        from backend.app.models.platform import GroupMembership
+        from backend.app.models.platform import GroupMembership, Community, Group
+        
+        # Meetings today globally or for this user (we will provide global stats to simulate dashboard view for now, or user-specific if preferred)
         meetings_today = db.scalar(
-            select(func.count(Meeting.id))
-            .join(GroupMembership, GroupMembership.group_id == Meeting.group_id)
-            .where(GroupMembership.user_id == user_id, Meeting.meeting_date == today)
+            select(func.count(Meeting.id)).where(Meeting.meeting_date == today)
         ) or 0
         
-        pending_approvals = db.scalar(
-            select(func.count(Meeting.id))
-            .where(Meeting.organizer_id == user_id, Meeting.status == MeetingStatus.ENDED)
-        ) or 0
+        total_meetings = db.scalar(select(func.count(Meeting.id))) or 0
+        live_meetings = db.scalar(select(func.count(Meeting.id)).where(Meeting.status == MeetingStatus.LIVE)) or 0
         
-        action_items_due = db.scalar(
-            select(func.count(ActionItem.id))
-            .where(ActionItem.assigned_to_id == user_id, ActionItem.status != ActionItemStatus.DONE)
-        ) or 0
-        
-        # Calculate attendance rate for meetings the user was expected at
-        attendance_records = db.scalar(select(func.count(AttendanceRecord.id)).where(AttendanceRecord.user_id == user_id)) or 0
-        present_records = db.scalar(select(func.count(AttendanceRecord.id)).where(AttendanceRecord.user_id == user_id, AttendanceRecord.status == "PRESENT")) or 0
-        attendance_rate = (present_records / attendance_records * 100) if attendance_records else 0
+        total_communities = db.scalar(select(func.count(Community.id)).where(Community.deleted_at.is_(None))) or 0
+        total_groups = db.scalar(select(func.count(Group.id)).where(Group.deleted_at.is_(None))) or 0
         
         return {
             "meetings_today": meetings_today,
-            "pending_approvals": pending_approvals,
-            "action_items_due": action_items_due,
-            "attendance_rate": round(attendance_rate, 2),
+            "total_meetings": total_meetings,
+            "live_meetings": live_meetings,
+            "total_communities": total_communities,
+
+            "total_groups": total_groups,
         }
 
-    def dashboard_insights(self, db: Session, user: User) -> list[str]:
-        insights = []
-        
-        # 1. Welcome insight
-        insights.append(f"Institutional memory is active. Welcome back, {user.full_name.split()[0]}!")
-        
-        # 2. Meetings volume insight
-        total_meetings = db.scalar(select(func.count(Meeting.id)).where(Meeting.organizer_id == user.id)) or 0
-        if total_meetings > 0:
-            insights.append(f"You have organized {total_meetings} total meetings across your groups.")
-        else:
-            insights.append("Start by scheduling your first meeting in a community group.")
-            
-        # 3. Action items insight
-        pending_actions = db.scalar(select(func.count(ActionItem.id)).where(ActionItem.assigned_to_id == user.id, ActionItem.status != ActionItemStatus.DONE)) or 0
-        if pending_actions > 0:
-            insights.append(f"You have {pending_actions} action items requiring attention.")
-        else:
-            insights.append("All your action items are cleared. Great job!")
-            
-        # 4. MOM status insight
-        moms_to_publish = db.scalar(select(func.count(MOMRecord.id)).join(Meeting).where(Meeting.organizer_id == user.id, MOMRecord.is_published == False)) or 0
-        if moms_to_publish > 0:
-            insights.append(f"You have {moms_to_publish} meeting minutes waiting for review and publication.")
-            
-        return insights
+    def scope_meetings(self, db: Session, group_ids: list[int] | None) -> dict:
+        stmt_total = select(func.count(Meeting.id))
+        if group_ids is not None:
+            stmt_total = stmt_total.where(Meeting.group_id.in_(group_ids))
+        total = db.scalar(stmt_total) or 0
+        stmt_up = select(func.count(Meeting.id)).where(
+            Meeting.meeting_date >= date.today(),
+            Meeting.status.in_([MeetingStatus.DRAFT, MeetingStatus.PUBLISHED]),
+        )
+        if group_ids is not None:
+            stmt_up = stmt_up.where(Meeting.group_id.in_(group_ids))
+        upcoming = db.scalar(stmt_up) or 0
+        stmt_done = select(func.count(Meeting.id)).where(Meeting.status == MeetingStatus.ENDED)
+        if group_ids is not None:
+            stmt_done = stmt_done.where(Meeting.group_id.in_(group_ids))
+        completed = db.scalar(stmt_done) or 0
+        stmt_live = select(func.count(Meeting.id)).where(Meeting.status == MeetingStatus.LIVE)
+        if group_ids is not None:
+            stmt_live = stmt_live.where(Meeting.group_id.in_(group_ids))
+        live = db.scalar(stmt_live) or 0
+        return {"total_meetings": total, "upcoming_meetings": upcoming, "completed_meetings": completed, "live_meetings": live}
+
+    def community_dashboard(self, db: Session, community_id: int) -> dict:
+        from backend.app.models.platform import Group
+
+        group_ids = list(db.scalars(select(Group.id).where(Group.community_id == community_id, Group.deleted_at.is_(None))).all())
+        from backend.app.models.platform import CommunityMembership
+
+        stats = self.scope_meetings(db, group_ids)
+        member_count = db.scalar(
+            select(func.count(CommunityMembership.id)).where(CommunityMembership.community_id == community_id)
+        ) or 0
+        return {**stats, "member_count": member_count, "group_count": len(group_ids)}
+
+    def group_dashboard(self, db: Session, group_id: int) -> dict:
+        from backend.app.models.platform import GroupMembership
+
+        stats = self.scope_meetings(db, [group_id])
+        member_count = db.scalar(select(func.count(GroupMembership.id)).where(GroupMembership.group_id == group_id)) or 0
+        return {**stats, "member_count": member_count}

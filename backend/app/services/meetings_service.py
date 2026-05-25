@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 
 from backend.app.core.security import create_token
 from backend.app.models.platform import Meeting, MeetingInvitation, MeetingStatus, MeetingStatusAudit, RSVPStatus
-from backend.app.models.user import User, UserRole
+from backend.app.domain.rbac.platform_roles import is_platform_super
+from backend.app.models.user import User
 
 _ALLOWED_TRANSITIONS: dict[MeetingStatus, set[MeetingStatus]] = {
     MeetingStatus.DRAFT: {MeetingStatus.PUBLISHED},
@@ -18,14 +19,16 @@ _ALLOWED_TRANSITIONS: dict[MeetingStatus, set[MeetingStatus]] = {
 
 class MeetingsService:
     def create_meeting(self, db: Session, payload: dict, organizer: User) -> Meeting:
-        # Validate that the user is an organizer or admin in the target group
-        from backend.app.models.platform import GroupMembership, MembershipRole
+        from backend.app.models.platform import AgendaItem, GroupMembership, MembershipRole
         
         group_id = payload.get("group_id")
         if not group_id:
             raise ValueError("Group ID is required")
+        
+        agenda_items_data = payload.pop("agenda_items", [])
+        extra_attendee_emails = payload.pop("extra_attendee_emails", [])
             
-        if organizer.role != UserRole.ADMIN:
+        if not is_platform_super(organizer):
             membership = db.scalar(
                 select(GroupMembership).where(
                     GroupMembership.group_id == group_id,
@@ -36,15 +39,53 @@ class MeetingsService:
             if not membership:
                 raise ValueError("Only Group Organizers or Admins can create meetings")
 
+        from backend.app.models.platform import MeetingMode
+
+        mode = payload.get("meeting_mode", MeetingMode.OFFLINE)
+        link = payload.get("meeting_link")
+        if mode == MeetingMode.ONLINE and not link:
+            raise ValueError("meeting_link is required for online meetings")
+        if mode == MeetingMode.OFFLINE:
+            payload["meeting_link"] = None
+
         meeting = Meeting(organizer_id=organizer.id, **payload)
         db.add(meeting)
+        db.flush()
+
+        # Create inline agenda items
+        for idx, item in enumerate(agenda_items_data):
+            agenda_item = AgendaItem(
+                meeting_id=meeting.id,
+                topic=item.get("topic", ""),
+                presenter=item.get("presenter"),
+                duration_minutes=item.get("duration_minutes", 15),
+                position=item.get("position", idx),
+            )
+            db.add(agenda_item)
+
         db.commit()
         db.refresh(meeting)
+
+        # Collect all group member emails
+        from backend.app.models.user import User as UserModel
+        group_members = db.execute(
+            select(GroupMembership, UserModel)
+            .join(UserModel, UserModel.id == GroupMembership.user_id)
+            .where(GroupMembership.group_id == group_id)
+        ).all()
+        member_emails = [user.email for _, user in group_members]
+
+        # Merge with extra attendee emails, de-duplicate
+        all_emails = list(set(member_emails + extra_attendee_emails))
+        if all_emails:
+            self.invite(db, meeting.id, all_emails)
+
         return meeting
+
 
     def list_meetings(self, db: Session, user: User) -> list[Meeting]:
         # Admins see everything
-        if user.role == UserRole.ADMIN:
+        if is_platform_super(user):
             return db.scalars(select(Meeting).order_by(Meeting.meeting_date.desc())).all()
             
         # Users see meetings for groups they are members of
@@ -64,8 +105,8 @@ class MeetingsService:
         allowed = _ALLOWED_TRANSITIONS[from_status]
         if to_status not in allowed:
             raise ValueError(f"Invalid transition {from_status} -> {to_status}")
-        if from_status == MeetingStatus.LIVE and to_status == MeetingStatus.PUBLISHED and actor.role != UserRole.ADMIN:
-            raise ValueError("Only admin can revert LIVE to PUBLISHED")
+        if from_status == MeetingStatus.LIVE and to_status == MeetingStatus.PUBLISHED and not is_platform_super(actor):
+            raise ValueError("Only platform admin can revert LIVE to PUBLISHED")
         meeting.status = to_status
         db.add(MeetingStatusAudit(meeting_id=meeting.id, from_status=from_status, to_status=to_status, changed_by_id=actor.id))
         db.commit()
@@ -97,4 +138,10 @@ class MeetingsService:
                 db.add(inv)
             invitations.append(inv)
         db.commit()
+        try:
+            from backend.app.workers.tasks.ai_tasks import send_meeting_invites
+
+            send_meeting_invites.delay(meeting_id)
+        except Exception:
+            pass
         return invitations

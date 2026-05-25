@@ -14,7 +14,7 @@ def seed():
     db = SessionLocal()
     try:
         # 1. Get or create Admin user
-        admin = db.query(User).filter(User.role == UserRole.ADMIN).first()
+        admin = db.query(User).filter(User.role.in_([UserRole.SUPERADMIN, UserRole.ADMIN])).first()
         if not admin:
             print("No admin user found. Please register an admin user first.")
             return

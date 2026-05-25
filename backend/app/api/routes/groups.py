@@ -31,7 +31,24 @@ def list_groups(community_id: int, db: Session = Depends(get_db), _: User = Depe
     return service.list_groups(db, community_id)
 
 
+@router.get("/{group_id}", response_model=GroupOut)
+def get_group(group_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    from backend.app.models.platform import Group
+
+    group = db.get(Group, group_id)
+    if not group or group.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Group not found")
+    return group
+
+
 from backend.app.schemas.platform import GroupMemberAdd
+
+@router.get("/{group_id}/dashboard")
+def group_dashboard(group_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    from backend.app.services.analytics_service import AnalyticsService
+
+    return AnalyticsService().group_dashboard(db, group_id)
+
 
 @router.get("/{group_id}/members")
 def list_group_members(group_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):

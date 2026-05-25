@@ -7,12 +7,3 @@ export async function getDashboardStats() {
   return res.json();
 }
 
-export async function getInsights() {
-  const res = await fetchWithAuth(apiUrl("/api/v1/analytics/insights"));
-  if (!res.ok) return [
-    "Attendance dropped 12% this month.",
-    "3 action items are overdue.",
-    "Most discussed topic this week: Sponsorship."
-  ];
-  return res.json();
-}

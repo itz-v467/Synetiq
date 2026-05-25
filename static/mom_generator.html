@@ -576,11 +576,10 @@
 
 <script>
 // ══════════════════════════════════════════════════════
-//  BACKEND URL
-//  Local:    'http://localhost:5000'
-//  Deployed: 'https://your-app.up.railway.app'
+//  BACKEND URL — empty = same origin (Docker nginx :8080 or direct API).
+//  Override if API is on another host: const BACKEND = 'https://api.example.com';
 // ══════════════════════════════════════════════════════
-const BACKEND = 'http://localhost:5000';
+const BACKEND = '';
 
 // ── SERVER CHECK ──────────────────────────────────────
 async function checkServer() {
